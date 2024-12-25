@@ -2,21 +2,27 @@ package org.theko.logger;
 
 public class LogEntry {
     private final LogLevel level;
+    private final long time;
     private final CallerInfo caller;
     private final String message;
 
-    public LogEntry (LogLevel level, CallerInfo caller, String message) {
+    public LogEntry (LogLevel level, long time, CallerInfo caller, String message) {
         this.level = level;
+        this.time = time;
         this.caller = caller;
         this.message = message;
     }
 
-    public LogEntry (LogLevel level, String message) {
-        this(level, null, message);
+    public LogEntry (LogLevel level, long time, String message) {
+        this(level, time, null, message);
     }
 
     public LogLevel getLevel() {
         return level;
+    }
+
+    public long getTime() {
+        return time;
     }
 
     public CallerInfo getCallerInfo() {
