@@ -71,6 +71,6 @@ public class LogEntry {
 
     @Override
     public String toString() {
-        LoggerOutput.format(this, LoggerOutput.DEFAULT_PATTERN);
+        return LoggerOutput.format(this, LoggerOutput.DEFAULT_PATTERN);
     }
 }
