@@ -15,6 +15,7 @@ public class LoggerOutput {
 
     protected String pattern;
     protected Formatter formatter;
+    protected LogLevel preferredLevel;
 
     protected List<OutputStream> outputStreams;
 
@@ -22,6 +23,14 @@ public class LoggerOutput {
         this.pattern = pattern;
         this.outputStreams = new CopyOnWriteArrayList<>();
         this.formatter = new Formatter();
+    }
+
+    public void setPreferredLevel(LogLevel level) {
+        this.preferredLevel = level;
+    }
+
+    public LogLevel getPreferredLevel() {
+        return this.preferredLevel;
     }
 
     public void removeAllOutputStreams() {
@@ -45,6 +54,7 @@ public class LoggerOutput {
     }
 
     public void outputLogEntry(LogEntry entry) {
+        if (entry.getLevel().ordinal() >= preferredLevel.ordinal())
         for (OutputStream os : outputStreams) {
             try {
                 os.write(format(entry, pattern).getBytes(StandardCharsets.UTF_8));
