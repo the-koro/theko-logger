@@ -4,13 +4,24 @@ import java.io.OutputStream;
 import java.util.List;
 
 public class GlobalLogger {
-    protected static final Logger logger;
-    protected static final LoggerOutput loggerOutput;
+    protected static Logger logger;
+    protected static LoggerOutput loggerOutput;
 
     static {
         loggerOutput = new LoggerOutput(LoggerOutput.DEFAULT_PATTERN);
         loggerOutput.addOutputStream(System.out);
         logger = new DefaultLogger(loggerOutput, 2);
+    }
+
+    public static void setLogger(Logger newLogger) {
+        logger = newLogger;
+    }
+
+    public static void setLoggerOutput(LoggerOutput output) {
+        loggerOutput = output;
+        if (logger instanceof DefaultLogger) {
+            ((DefaultLogger) logger).setLoggerOutput(loggerOutput);
+        }
     }
 
     // Logging methods
@@ -45,6 +56,14 @@ public class GlobalLogger {
     }
 
     // LoggerOutput management
+    public void setPreferredLevel(LogLevel level) {
+        loggerOutput.setPreferredLevel(level);
+    }
+
+    public LogLevel getPreferredLevel() {
+        return loggerOutput.getPreferredLevel();
+    }
+
     public static void addOutputStream(OutputStream os) {
         loggerOutput.addOutputStream(os);
     }
