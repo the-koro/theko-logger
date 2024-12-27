@@ -28,6 +28,10 @@ public class DefaultLogger implements Logger {
         this(null, STACK_TRACE_OFFSET_DEFAULT);
     }
 
+    public void setLoggerOutput(LoggerOutput loggerOutput) {
+        this.loggerOutput = loggerOutput;
+    }
+
     @Override
     public void log(LogLevel level, String message) {
         StackTraceElement[] stackTrace = getStackTrace();
