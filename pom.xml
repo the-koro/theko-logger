@@ -5,7 +5,7 @@
 
     <groupId>org.theko.logger</groupId>
     <artifactId>logger-library</artifactId>
-    <version>0.2.2-beta</version>
+    <version>0.2.3-beta</version>
     <packaging>jar</packaging>
 
     <name>Theko Logger Library</name>
