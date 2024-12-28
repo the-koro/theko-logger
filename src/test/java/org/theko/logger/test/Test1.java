@@ -4,42 +4,57 @@ import java.io.FileOutputStream;
 import java.util.Scanner;
 
 import org.theko.logger.GlobalLogger;
-import org.theko.logger.LogLevel;
 
 public class Test1 {
     public static void main(String[] args) {
+        // Declare scanner object to read user input
         Scanner scanner = null;
 
         try {
+            // Set a custom log pattern (includes timestamp, log level, thread, class, method, and message)
             GlobalLogger.setPattern("[{time yyyy:MM:dd HH:mm:ss:SSS}] {level} | [{thread}] | {class}.{method} > {message}\n");
+
+            // Add a FileOutputStream to write log entries to "test1.log"
             GlobalLogger.addOutputStream(new FileOutputStream("test1.log"));
-            GlobalLogger.log(LogLevel.DEBUG, "Log file added to output streams.");
-            GlobalLogger.log(LogLevel.INFO, "Program launched.");
+            
+            // Log a debug message to indicate the log file has been added
+            GlobalLogger.debug("Log file added to output streams.");
+            
+            // Log an info message to indicate the program has been launched
+            GlobalLogger.info("Program launched.");
 
+            // Initialize the scanner to read user input from the console
             scanner = new Scanner(System.in);
-            GlobalLogger.log(LogLevel.DEBUG, "Scanner object has been created.");
+            GlobalLogger.debug("Scanner object has been created.");
 
+            // Prompt user to enter text to reverse
             System.out.print("Enter text to reverse: ");
-            String text = scanner.nextLine();
-            GlobalLogger.log(LogLevel.INFO, "Text " + text + " received.");
-            GlobalLogger.log(LogLevel.DEBUG, "Reversing...");
+            String text = scanner.nextLine();  // Read the input text
+            GlobalLogger.info("Text " + text + " received.");
+            GlobalLogger.debug("Reversing...");
 
-            GlobalLogger.log(LogLevel.DEBUG, "StringBuilder created.");
+            // Create a StringBuilder to reverse the input text
+            GlobalLogger.debug("StringBuilder created.");
             StringBuilder reversedText = new StringBuilder();
 
+            // Loop through the input string in reverse order and append to StringBuilder
             for (int i = text.length() - 1; i >= 0; i--) {
                 reversedText.append(text.charAt(i));
             }
 
-            GlobalLogger.log(LogLevel.INFO, "Reversed text: " + reversedText.toString());
+            // Log the reversed text
+            GlobalLogger.info("Reversed text: " + reversedText.toString());
+            // Output the reversed text to the console
             System.out.println("Reversed: " + reversedText.toString());
 
         } catch (Exception ex) {
-            GlobalLogger.log(LogLevel.ERROR, "An exception occured: " + ex.getMessage());
+            // Log any exceptions that occur
+            GlobalLogger.error("An exception occured: " + ex.getMessage());
         } finally {
+            // Close the scanner if it was initialized
             if (scanner != null) {
                 scanner.close();
-                GlobalLogger.log(LogLevel.DEBUG, "Scanner has been closed.");
+                GlobalLogger.debug("Scanner has been closed.");
             }
         }
     }
