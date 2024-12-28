@@ -6,7 +6,7 @@
 
     <groupId>org.theko.logger</groupId>
     <artifactId>theko-logger</artifactId>
-    <version>0.2.0-beta</version>
+    <version>0.2.1-beta</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
