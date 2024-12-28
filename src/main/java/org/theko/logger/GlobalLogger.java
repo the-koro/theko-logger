@@ -3,6 +3,8 @@ package org.theko.logger;
 import java.io.OutputStream;
 import java.util.List;
 
+import org.json.JSONObject;
+
 /**
  * GlobalLogger is a utility class that manages a static logger instance.
  * It provides convenient static methods for logging messages at different levels and managing logger settings globally.
@@ -15,6 +17,7 @@ public class GlobalLogger {
     static {
         loggerOutput = new LoggerOutput(LoggerOutput.DEFAULT_PATTERN);
         loggerOutput.addOutputStream(System.out);  // Add standard output stream for logging
+        loggerOutput.setPreferredLevel(LogLevel.DEBUG);
         logger = new DefaultLogger(loggerOutput, 2);  // Default logger with stack trace offset of 2
     }
 
@@ -187,5 +190,18 @@ public class GlobalLogger {
         if (logger instanceof DefaultLogger) {
             ((DefaultLogger) logger).disableMaxLogsCount();
         }
+    }
+
+    /**
+     * Converts all the log entries into a JSON array.
+     * Each log entry is serialized to a JSONObject using the {@link LogUtility}.
+     * 
+     * @return A JSON array containing all the log entries as JSON objects.
+     */
+    public static JSONObject getAllLogsAsJSON() {
+        if (logger instanceof DefaultLogger) {
+            return ((DefaultLogger) logger).getAllLogsAsJSON();
+        }
+        return null;
     }
 }
