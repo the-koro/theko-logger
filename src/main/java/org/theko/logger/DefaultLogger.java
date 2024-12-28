@@ -108,6 +108,42 @@ public class DefaultLogger implements Logger {
     }
 
     /**
+     * Logs an informational message.
+     * 
+     * @param message The message to log.
+     */
+    public void info(String message) {
+        log(LogLevel.INFO, message);
+    }
+
+    /**
+     * Logs a warning message.
+     * 
+     * @param message The message to log.
+     */
+    public void warn(String message) {
+        log(LogLevel.WARN, message);
+    }
+
+    /**
+     * Logs an error message.
+     * 
+     * @param message The message to log.
+     */
+    public void error(String message) {
+        log(LogLevel.ERROR, message);
+    }
+
+    /**
+     * Logs a debug message.
+     * 
+     * @param message The message to log.
+     */
+    public void debug(String message) {
+        log(LogLevel.DEBUG, message);
+    }
+
+    /**
      * Sets the consumer function to be executed when a log entry is created.
      * 
      * @param onLogCreated The consumer function to handle new log entries.
