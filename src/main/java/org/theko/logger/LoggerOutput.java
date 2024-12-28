@@ -15,8 +15,17 @@ import java.util.regex.Pattern;
  * and writing them to specified output streams.
  */
 public class LoggerOutput {
+    /** The minimal pattern without the time, class, and method information */
+    public static final String MINIMAL_PATTERN = "{level} | {message}";
+
+    /** The light pattern without the class, method information */
+    public static final String LIGHT_PATTERN = "[{time HH:mm:ss:SSS}] {level} | {message}";
+
     /** The default pattern used for formatting log entries */
     public static final String DEFAULT_PATTERN = "[{time HH:mm:ss:SSS}] {level} | {class}.{method} > {message}";
+
+    /** The detailed pattern with the file name, and line number information */
+    public static final String DETAILED_PATTERN = "[{time HH:mm:ss:SSS}] {level} | File {file} at {lineNumber} | {class}.{method} > {message}";
 
     /** The pattern used to format log entries */
     protected String pattern;
