@@ -19,6 +19,10 @@ public class LogEntry {
      * @param message The log message.
      */
     public LogEntry(LogLevel level, long time, CallerInfo caller, String message) {
+        if (level == LogLevel.NONE) {
+            throw new IllegalArgumentException("Log level cannot be NONE.");
+        }
+
         this.level = level;
         this.time = time;
         this.caller = caller;
