@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -186,21 +185,14 @@ public class DefaultLogger implements Logger {
 
     /**
      * Converts all the log entries into a JSON array.
-     * Each log entry is serialized to a JSONObject using the LogEntry's getJSONObject() method.
+     * Each log entry is serialized to a JSONObject using the {@link LogUtility}.
      * 
      * @return A JSON array containing all the log entries as JSON objects.
      */
     public JSONObject getAllLogsAsJSON() {
-        JSONArray logsArray = new JSONArray();  // Create a JSON array to hold all log entries
-        
-        // Iterate through all logs and convert each to a JSONObject
-        for (LogEntry logEntry : logs) {
-            logsArray.put(logEntry.getJSONObject());  // Add each log entry's JSONObject to the array
-        }
-        
-        // Create a final JSON object that contains the logs array
         JSONObject allLogsJson = new JSONObject();
-        allLogsJson.put("logs", logsArray);  // Add the logs array under the "logs" key
+        
+        allLogsJson.put("logs", LogUtility.exportLogsToJSON(this.logs));  // Add the logs array under the "logs" key
         
         return allLogsJson;  // Return the final JSON object
     }
