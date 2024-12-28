@@ -1,12 +1,16 @@
 package org.theko.logger;
 
+import java.io.Serializable;
+
 import org.json.JSONObject;
 
 /**
  * Represents a single log entry containing information about the log level, timestamp, 
  * caller information, and the actual log message.
  */
-public class LogEntry {
+public class LogEntry implements Serializable {
+    private static final long serialVersionUID = 1L;  // Version control for serialization
+
     private final LogLevel level;  // Log level (DEBUG, INFO, ERROR, etc.)
     private final long time;  // Timestamp of when the log entry was created
     private final CallerInfo caller;  // Information about the caller (class, method, etc.)

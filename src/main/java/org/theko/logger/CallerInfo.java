@@ -1,10 +1,14 @@
 package org.theko.logger;
 
+import java.io.Serializable;
+
 /**
  * Holds detailed information about the caller of the log entry, including the class, 
  * method, file, and other relevant metadata.
  */
-public class CallerInfo {
+public class CallerInfo implements Serializable {
+    private static final long serialVersionUID = 1L;  // Version control for serialization
+    
     private final String className;  // Class name from which the log was called
     private final String methodName;  // Method name from which the log was called
     private final boolean isNativeMethod;  // Whether the method is native (true if native)
