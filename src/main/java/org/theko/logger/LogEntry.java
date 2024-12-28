@@ -110,7 +110,7 @@ public class LogEntry implements Serializable {
         JSONObject json = new JSONObject();
         
         // Adding log level, timestamp, and message to JSON
-        json.put("level", level.name());
+        json.put("level", level.toString());
         json.put("time", time);
         json.put("message", message);
         
@@ -120,10 +120,19 @@ public class LogEntry implements Serializable {
             callerJson.put("className", caller.getClassName());
             callerJson.put("methodName", caller.getMethodName());
             callerJson.put("nativeMethod", caller.isNativeMethod());
-            callerJson.put("moduleName", caller.getModuleName());
-            callerJson.put("moduleVersion", caller.getModuleVersion());
-            callerJson.put("classLoaderName", caller.getClassLoaderName());
-            callerJson.put("threadName", caller.getThreadName());
+
+            if (checkString(caller.getModuleName())) {
+                callerJson.put("moduleName", caller.getModuleName());
+            }
+            if (checkString(caller.getModuleVersion())) {
+                callerJson.put("moduleVersion", caller.getModuleVersion());
+            }
+            if (checkString(caller.getClassLoaderName())) {
+                callerJson.put("classLoaderName", caller.getClassLoaderName());
+            }
+            if (checkString(caller.getThreadName())) {
+                callerJson.put("threadName", caller.getThreadName());
+            }
             callerJson.put("fileName", caller.getFileName());
             callerJson.put("lineNumber", caller.getLineNumber());
             
@@ -131,6 +140,10 @@ public class LogEntry implements Serializable {
             json.put("caller", callerJson);
         }
         return json;
+    }
+
+    private static boolean checkString(String s) {
+        return s != null && !s.isEmpty();
     }
 
     /**
