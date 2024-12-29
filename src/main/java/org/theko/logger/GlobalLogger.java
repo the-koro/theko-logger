@@ -1,5 +1,6 @@
 package org.theko.logger;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -45,6 +46,13 @@ public class GlobalLogger {
         }
     }
 
+    /**
+     * Updates the LoggerOutput instance of the current logger.
+     */
+    public static void updateLoggerOutput() {
+        setLoggerOutput(loggerOutput);
+    }
+
     // Logging methods for different log levels
     /**
      * Logs a message with the specified log level.
@@ -81,6 +89,26 @@ public class GlobalLogger {
      */
     public static void error(String message) {
         logger.log(LogLevel.ERROR, message);
+    }
+
+    /**
+     * Logs an error message along with the exception details.
+     * 
+     * @param message The message to log.
+     * @param e The exception to log.
+     */
+    public static void error(String message, Throwable e) {
+        // Log the error message
+        logger.log(LogLevel.ERROR, message);
+
+        // Log the exception (if it's not null)
+        if (e != null) {
+            // Log the exception message and stack trace
+            logger.log(LogLevel.ERROR, "Exception: " + e.toString());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.log(LogLevel.ERROR, "\tat " + element.toString());
+            }
+        }
     }
 
     /**
@@ -207,9 +235,41 @@ public class GlobalLogger {
         return null;
     }
 
-    public void shutdown() {
+    /**
+     * Closes the logger, shutting down asynchronous logging if applicable,
+     * and closing all output streams except {@link System#out}.
+     */
+    public static void close() {
+        shutdown();
+        if (loggerOutput != null) {
+            closeLoggerOutput();
+        }
+    }
+
+    /**
+     * Shuts down the logger, performing cleanup for asynchronous logger.
+     */
+    public static void shutdown() {
         if (logger instanceof AsyncLogger) {
             ((AsyncLogger) logger).shutdown();
         }
+    }
+
+    /**
+     * Closes all output streams managed by the LoggerOutput, except for {@link System#out}.
+     */
+    public static void closeLoggerOutput() {
+        for (OutputStream os : loggerOutput.getOutputStreams()) {
+            if (os.equals(System.out)) {
+                continue;
+            }
+
+            try {
+                os.close();
+            } catch (IOException e) {
+                error("Failed to close output stream", e);
+            }
+        }
+        loggerOutput.removeAllOutputStreams();
     }
 }
