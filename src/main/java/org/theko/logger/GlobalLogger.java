@@ -242,7 +242,12 @@ public class GlobalLogger {
     public static void close() {
         shutdown();
         if (loggerOutput != null) {
-            closeLoggerOutput();
+            try {
+                loggerOutput.closeOutputStreams();
+            } catch (IOException e) {
+                error("An IOException has occured.", e);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -253,23 +258,5 @@ public class GlobalLogger {
         if (logger instanceof AsyncLogger) {
             ((AsyncLogger) logger).shutdown();
         }
-    }
-
-    /**
-     * Closes all output streams managed by the LoggerOutput, except for {@link System#out}.
-     */
-    public static void closeLoggerOutput() {
-        for (OutputStream os : loggerOutput.getOutputStreams()) {
-            if (os.equals(System.out)) {
-                continue;
-            }
-
-            try {
-                os.close();
-            } catch (IOException e) {
-                error("Failed to close output stream", e);
-            }
-        }
-        loggerOutput.removeAllOutputStreams();
     }
 }
