@@ -40,6 +40,8 @@ public class GlobalLogger {
         // If the current logger is an instance of DefaultLogger, update its LoggerOutput
         if (logger instanceof DefaultLogger) {
             ((DefaultLogger) logger).setLoggerOutput(loggerOutput);
+        } else if (logger instanceof AsyncLogger) {
+            ((AsyncLogger) logger).setLoggerOutput(loggerOutput);
         }
     }
 
@@ -178,8 +180,8 @@ public class GlobalLogger {
      * @param maxLogsCount The maximum number of logs to store. If the count exceeds this limit, older logs will be discarded.
      */
     public static void setMaxLogsCount(int maxLogsCount) {
-        if (logger instanceof DefaultLogger) {
-            ((DefaultLogger) logger).setMaxLogsCount(maxLogsCount);
+        if (logger instanceof ExtendedLogger) {
+            ((ExtendedLogger) logger).setMaxLogsCount(maxLogsCount);
         }
     }
 
@@ -187,8 +189,8 @@ public class GlobalLogger {
      * Disables the max logs count limit, allowing logs to accumulate indefinitely.
      */
     public static void disableMaxLogsCount() {
-        if (logger instanceof DefaultLogger) {
-            ((DefaultLogger) logger).disableMaxLogsCount();
+        if (logger instanceof ExtendedLogger) {
+            ((ExtendedLogger) logger).disableMaxLogsCount();
         }
     }
 
@@ -199,9 +201,15 @@ public class GlobalLogger {
      * @return A JSON array containing all the log entries as JSON objects.
      */
     public static JSONObject getAllLogsAsJSON() {
-        if (logger instanceof DefaultLogger) {
-            return ((DefaultLogger) logger).getAllLogsAsJSON();
+        if (logger instanceof ExtendedLogger) {
+            return ((ExtendedLogger) logger).getAllLogsAsJSON();
         }
         return null;
+    }
+
+    public void shutdown() {
+        if (logger instanceof AsyncLogger) {
+            ((AsyncLogger) logger).shutdown();
+        }
     }
 }
