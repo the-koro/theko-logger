@@ -16,22 +16,19 @@ import java.util.regex.Pattern;
  */
 public class LoggerOutput {
     /** The minimal pattern without the time, class, and method information */
-    public static final String MINIMAL_PATTERN = "{level} | {message}";
+    public static final String MINIMAL_PATTERN = "[{level}] {message}";
 
     /** The light pattern without the class, method information */
-    public static final String LIGHT_PATTERN = "[{time HH:mm:ss:SSS}] {level} | {message}";
+    public static final String LIGHT_PATTERN = "[{time HH:mm:ss:SSS}] [{level}] | {message}";
 
     /** The default pattern used for formatting log entries */
-    public static final String DEFAULT_PATTERN = "[{time HH:mm:ss:SSS}] {level} | {class}.{method} > {message}";
+    public static final String DEFAULT_PATTERN = "[{time HH:mm:ss:SSS}] [{level}] | {class}.{method} > {message}";
 
     /** The detailed pattern with the file name, and line number information */
-    public static final String DETAILED_PATTERN = "[{time HH:mm:ss:SSS}] {level} | File {file} at {lineNumber} | {class}.{method} > {message}";
+    public static final String DETAILED_PATTERN = "[{time yyyy:MM:dd HH:mm:ss:SSS}] [{level}] | [{thread}] {class}.{method} > {message}";
 
     /** The pattern used to format log entries */
     protected String pattern;
-
-    /** The formatter used to format log entries */
-    protected Formatter formatter;
 
     /** The preferred log level to filter the output */
     protected LogLevel preferredLevel;
@@ -46,8 +43,8 @@ public class LoggerOutput {
      */
     public LoggerOutput(String pattern) {
         this.pattern = pattern;
+        this.preferredLevel = LogLevel.WARN;
         this.outputStreams = new CopyOnWriteArrayList<>();
-        this.formatter = new Formatter();
     }
 
     /**
@@ -76,6 +73,15 @@ public class LoggerOutput {
     }
 
     /**
+     * Removes output stream from the logger.
+     * 
+     * @param os The output stream to remove.
+     */
+    public void removeOutputStream(OutputStream os) {
+        this.outputStreams.remove(os);
+    }
+
+    /**
      * Adds an output stream where log entries will be written.
      * 
      * @param os The output stream to add.
@@ -91,6 +97,22 @@ public class LoggerOutput {
      */
     public List<OutputStream> getOutputStreams() {
         return outputStreams;
+    }
+
+    /**
+     * Closes, and removes all output streams in logger.
+     * 
+     * @throws IOException
+     */
+    public void closeOutputStreams() throws IOException {
+        for (OutputStream os : outputStreams) {
+            if (os.equals(System.out)) {
+                continue; // skip
+            }
+
+            os.close();
+        }
+        removeAllOutputStreams();
     }
 
     /**
