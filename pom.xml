@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.theko.logger</groupId>
-    <artifactId>logger-library</artifactId>
-    <version>0.5.0-beta</version>
+    <groupId>org.theko</groupId>
+    <artifactId>logger</artifactId>
+    <version>0.5.1-beta</version>
     <packaging>jar</packaging>
 
     <name>Theko Logger Library</name>
