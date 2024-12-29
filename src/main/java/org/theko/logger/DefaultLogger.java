@@ -4,20 +4,15 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import org.json.JSONObject;
-
 /**
  * DefaultLogger is the implementation of the Logger interface.
  * It manages logging entries, storing them in memory and optionally outputting them via LoggerOutput.
  * Logs can also be processed by a consumer function once created.
  */
-public class DefaultLogger implements Logger {
-    protected List<LogEntry> logs;  // List to store all log entries
+public class DefaultLogger extends ExtendedLogger {
     protected LoggerOutput loggerOutput;  // Logger output handler to display logs
     protected Consumer<LogEntry> onLogCreated;  // A consumer that can handle the log entry after it's created
     private final int stackTraceOffset;  // Offset to find the actual caller method in the stack trace
-
-    protected int maxLogsCount = -1;  // Maximum number of logs to store, -1 means no limit
 
     protected static final int STACK_TRACE_OFFSET_DEFAULT = 1;  // Default offset for stack trace
 
@@ -161,40 +156,6 @@ public class DefaultLogger implements Logger {
      */
     protected StackTraceElement[] getStackTrace() {
         return Thread.currentThread().getStackTrace();
-    }
-    
-    /**
-     * Sets the maximum number of logs to store.
-     * If the log count exceeds this limit, older logs will be discarded.
-     * 
-     * @param maxLogsCount The maximum number of logs to keep. Should be greater than 5 or -1 to disable.
-     */
-    public void setMaxLogsCount(int maxLogsCount) {
-        if (maxLogsCount < 5 && maxLogsCount != -1) {
-            throw new IllegalArgumentException("maxLogsCount needs to be greater than 5, or equals to -1.");
-        }
-        this.maxLogsCount = maxLogsCount;
-    }
-
-    /**
-     * Disables the maximum log count, allowing logs to accumulate indefinitely.
-     */
-    public void disableMaxLogsCount() {
-        this.maxLogsCount = -1;
-    }
-
-    /**
-     * Converts all the log entries into a JSON array.
-     * Each log entry is serialized to a JSONObject using the {@link LogUtility}.
-     * 
-     * @return A JSON array containing all the log entries as JSON objects.
-     */
-    public JSONObject getAllLogsAsJSON() {
-        JSONObject allLogsJson = new JSONObject();
-        
-        allLogsJson.put("logs", LogUtility.exportLogsToJSON(this.logs));  // Add the logs array under the "logs" key
-        
-        return allLogsJson;  // Return the final JSON object
     }
 
     /**
