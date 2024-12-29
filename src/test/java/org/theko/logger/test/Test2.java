@@ -51,8 +51,9 @@ public class Test2 {
 
             exportLogsToJSON(); // Handle JSON export in a separate method
         } catch (IOException e) {
-            GlobalLogger.error("Error writing to log file or exporting JSON: " + e.getMessage());
-            e.printStackTrace();
+            GlobalLogger.error("Error writing to log file or exporting JSON", e);
+        } finally {
+            GlobalLogger.close();
         }
     }
 
@@ -63,7 +64,7 @@ public class Test2 {
             jsonLogsFOS.write(jsonStr.getBytes(StandardCharsets.UTF_8));
             GlobalLogger.info("Logs exported to JSON successfully.");
         } catch (IOException e) {
-            GlobalLogger.error("Error writing logs to JSON file: " + e.getMessage());
+            GlobalLogger.error("Error writing logs to JSON file: ", e);
         }
     }
 }

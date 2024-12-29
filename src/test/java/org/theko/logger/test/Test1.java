@@ -55,6 +55,7 @@ public class Test1 {
             if (scanner != null) {
                 scanner.close();
                 GlobalLogger.debug("Scanner has been closed.");
+                GlobalLogger.close();
             }
         }
     }
