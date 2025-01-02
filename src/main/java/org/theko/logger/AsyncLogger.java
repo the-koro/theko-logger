@@ -1,11 +1,11 @@
 package org.theko.logger;
 
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
 /**
@@ -13,7 +13,7 @@ import java.util.function.Consumer;
  * It manages logging entries asynchronously, storing them in memory and optionally outputting them via LoggerOutput.
  */
 public class AsyncLogger extends ExtendedLogger {
-    protected final Queue<LogEntry> logQueue; // Queue for logs to be processed asynchronously
+    protected final LinkedBlockingQueue<LogEntry> logQueue; // Queue for logs to be processed asynchronously
     protected LoggerOutput loggerOutput; // Logger output handler to display logs
     protected Consumer<LogEntry> onLogCreated; // A consumer that handles log entries after creation
     private final ExecutorService executorService; // Thread pool for asynchronous logging
@@ -31,7 +31,7 @@ public class AsyncLogger extends ExtendedLogger {
         this.loggerOutput = loggerOutput;
         this.stackTraceOffset = stackTraceOffset;
         this.logs = new CopyOnWriteArrayList<>(); // Thread-safe list for log entries
-        this.logQueue = new ConcurrentLinkedQueue<>(); // Thread-safe queue for log entries
+        this.logQueue = new LinkedBlockingQueue<>(4096); // Thread-safe queue for log entries
         this.executorService = Executors.newSingleThreadExecutor(); // Single-thread executor for async processing
         startLogProcessing();
     }
@@ -57,12 +57,15 @@ public class AsyncLogger extends ExtendedLogger {
      */
     private void startLogProcessing() {
         executorService.submit(() -> {
-            while (true) {
-                LogEntry log = logQueue.poll(); // Retrieve and remove the head of the queue
-                if (log != null) {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    LogEntry log = logQueue.take(); // Blocks if the queue is empty
                     processLog(log);
+                } catch (InterruptedException e) {
+                    System.out.println("A");
+                    Thread.currentThread().interrupt(); // Handle thread interruption properly
+                    break;
                 }
-                Thread.yield(); // Prevent busy-waiting
             }
         });
     }
@@ -75,20 +78,49 @@ public class AsyncLogger extends ExtendedLogger {
     private void processLog(LogEntry log) {
         logs.add(log); // Add to the log list
 
-        // Trim the list if maxLogsCount is set
-        if (maxLogsCount != -1 && logs.size() > maxLogsCount) {
-            logs.subList(0, logs.size() - maxLogsCount).clear();
+        if (logQueue.remainingCapacity() == 0) {
+            logQueue.poll(); // Remove the oldest log entry if the queue is full
         }
-
+        //logQueue.offer(log); // Add the new log entry
+    
+        // Trim the list if maxLogsCount is set
+        if (maxLogsCount != -1) {
+            while (logs.size() > maxLogsCount) {
+                logs.remove(0); // Remove the oldest log entry
+            }
+        }
+    
         // Output the log entry using LoggerOutput if available
         if (loggerOutput != null) {
-            loggerOutput.outputLogEntry(log);
+            loggerOutput.processToOut(log);
         }
-
+    
         // Process the log entry using the consumer if set
         if (onLogCreated != null) {
             onLogCreated.accept(log);
         }
+    }
+
+    /**
+     * Drains all logs from the queue, processes them, and removes them.
+     * This method ensures that all logs in the queue are processed and output immediately,
+     * clearing the queue in the process.
+     */
+    public void drain() throws InterruptedException {
+        // Create a CountDownLatch to wait for all logs to be processed
+        CountDownLatch latch = new CountDownLatch(logQueue.size());
+
+        // Process and clear the queue asynchronously
+        while (!logQueue.isEmpty()) {
+            LogEntry log = logQueue.take();  // Blocking call until a log is available
+            processLog(log);  // Process the log
+
+            // Decrement the latch after processing each log entry
+            latch.countDown();
+        }
+
+        // Block the current thread until all logs are processed
+        latch.await();
     }
 
     /**
