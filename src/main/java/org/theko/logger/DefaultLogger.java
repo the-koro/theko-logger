@@ -95,7 +95,7 @@ public class DefaultLogger extends ExtendedLogger {
         
         // Output the log entry using the loggerOutput, if it's set
         if (loggerOutput != null) {
-            loggerOutput.outputLogEntry(log);
+            loggerOutput.processToOut(log);
         }
 
         // If a consumer is set, process the log entry
