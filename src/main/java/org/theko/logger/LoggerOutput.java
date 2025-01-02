@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * The LoggerOutput class is responsible for managing the output streams where log entries are written.
@@ -80,6 +81,22 @@ public class LoggerOutput {
      */
     public void setOutputs(List<LogOutputSettings> outputs) {
         this.outputs = outputs;
+    }
+
+    /**
+     * Retrieves a list of {@link LogOutputSettings} that have a matching {@link OutputStream}.
+     * 
+     * This method filters the existing outputs to find those whose {@link OutputStream} is equal to
+     * the one provided as an argument. If no matching {@link LogOutputSettings} are found, an empty
+     * list will be returned.
+     * 
+     * @param os The {@link OutputStream} to match against the {@link LogOutputSettings}.
+     * @return A list of {@link LogOutputSettings} with a matching {@link OutputStream}.
+     */
+    public List<LogOutputSettings> getOutputsWith(OutputStream os) {
+        return outputs.stream()
+                .filter(output -> output != null && os.equals(output.getOutputStream()))
+                .collect(Collectors.toList());
     }
 
     /**
