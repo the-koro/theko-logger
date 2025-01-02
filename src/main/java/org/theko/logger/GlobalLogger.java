@@ -2,6 +2,7 @@ package org.theko.logger;
 
 import static org.theko.logger.LogLevel.*;
 
+import java.io.OutputStream;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -138,6 +139,19 @@ public class GlobalLogger {
      */
     public static void addOutput(LogOutputSettings output) {
         loggerOutput.addOutput(output);
+    }
+    /**
+     * Retrieves a list of {@link LogOutputSettings} that have a matching {@link OutputStream}.
+     * 
+     * This method filters the existing outputs to find those whose {@link OutputStream} is equal to
+     * the one provided as an argument. If no matching {@link LogOutputSettings} are found, an empty
+     * list will be returned.
+     * 
+     * @param os The {@link OutputStream} to match against the {@link LogOutputSettings}.
+     * @return A list of {@link LogOutputSettings} with a matching {@link OutputStream}.
+     */
+    public static List<LogOutputSettings> getOutputsWith(OutputStream os) {
+        return loggerOutput.getOutputsWith(os);
     }
 
     /**
