@@ -10,124 +10,63 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * LoggerOutput is responsible for managing log output, including formatting the log entries
- * and writing them to specified output streams.
- */
 public class LoggerOutput {
-    /** The minimal pattern without the time, class, and method information */
+    // Constants for log patterns
     public static final String MINIMAL_PATTERN = "[{level}] {message}";
-
-    /** The light pattern without the class, method information */
     public static final String LIGHT_PATTERN = "[{time HH:mm:ss:SSS}] [{level}] | {message}";
-
-    /** The default pattern used for formatting log entries */
     public static final String DEFAULT_PATTERN = "[{time HH:mm:ss:SSS}] [{level}] | {class}.{method} > {message}";
-
-    /** The detailed pattern with the file name, and line number information */
     public static final String DETAILED_PATTERN = "[{time yyyy:MM:dd HH:mm:ss:SSS}] [{level}] | [{thread}] {class}.{method} > {message}";
 
-    /** The pattern used to format log entries */
-    protected String pattern;
+    protected List<LogOutputSettings> outputs;
 
-    /** The preferred log level to filter the output */
-    protected LogLevel preferredLevel;
-
-    /** List of output streams where log entries are written */
-    protected List<OutputStream> outputStreams;
-
-    /**
-     * Constructor to initialize the LoggerOutput with a given pattern.
-     * 
-     * @param pattern The pattern used for formatting log entries.
-     */
-    public LoggerOutput(String pattern) {
-        this.pattern = pattern;
-        this.preferredLevel = LogLevel.WARN;
-        this.outputStreams = new CopyOnWriteArrayList<>();
+    public LoggerOutput(List<LogOutputSettings> outputs) {
+        this.outputs = outputs;
     }
 
-    /**
-     * Sets the preferred log level. Only logs at this level or higher will be output.
-     * 
-     * @param level The preferred log level.
-     */
-    public void setPreferredLevel(LogLevel level) {
-        this.preferredLevel = level;
+    public LoggerOutput(LogOutputSettings output) {
+        this.outputs = new CopyOnWriteArrayList<>();
+        this.outputs.add(output);
     }
 
-    /**
-     * Gets the current preferred log level.
-     * 
-     * @return The preferred log level.
-     */
-    public LogLevel getPreferredLevel() {
-        return this.preferredLevel;
+    public List<LogOutputSettings> getOutputs() {
+        return this.outputs;
     }
 
-    /**
-     * Removes all output streams from the logger.
-     */
-    public void removeAllOutputStreams() {
-        outputStreams.clear();
+    public void setOutputs(List<LogOutputSettings> outputs) {
+        this.outputs = outputs;
     }
 
-    /**
-     * Removes output stream from the logger.
-     * 
-     * @param os The output stream to remove.
-     */
-    public void removeOutputStream(OutputStream os) {
-        this.outputStreams.remove(os);
+    public void addOutput(LogOutputSettings output) {
+        this.outputs.add(output);
     }
 
-    /**
-     * Adds an output stream where log entries will be written.
-     * 
-     * @param os The output stream to add.
-     */
-    public void addOutputStream(OutputStream os) {
-        outputStreams.add(os);
+    public boolean removeOutput(LogOutputSettings output) {
+        return outputs.remove(output);
     }
 
-    /**
-     * Gets the list of output streams currently used by the logger.
-     * 
-     * @return A list of output streams.
-     */
-    public List<OutputStream> getOutputStreams() {
-        return outputStreams;
+    public void removeAllOutputs() {
+        outputs.clear();
     }
 
-    /**
-     * Closes, and removes all output streams in logger.
-     * 
-     * @throws IOException
-     */
-    public void closeOutputStreams() throws IOException {
-        for (OutputStream os : outputStreams) {
-            if (os.equals(System.out)) {
-                continue; // skip
-            }
-
-            os.close();
-        }
-        removeAllOutputStreams();
-    }
-
-    /**
-     * Formats a log entry using the instance's pattern.
-     * 
-     * @param entry The log entry to format.
-     * @return A formatted log entry string.
-     */
-    public String format(LogEntry entry) {
-        return format(entry, pattern);
+    public void close() {
+        outputs.stream()
+            .filter(output -> output != null && !output.getOutputStream().equals(System.out))
+            .forEach(output -> {
+                try {
+                    OutputStream os = output.getOutputStream();
+                    if (os != null) {
+                        os.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        removeAllOutputs();
     }
 
     /**
      * Formats a log entry using the provided pattern.
-     * 
+     *
      * @param entry The log entry to format.
      * @param pattern The pattern used for formatting.
      * @return A formatted log entry string.
@@ -137,21 +76,30 @@ public class LoggerOutput {
     }
 
     /**
-     * Outputs a formatted log entry to all the registered output streams.
+     * Immediately outputs a formatted log entry to all the registered output streams.
      * If the log level of the entry is greater than or equal to the preferred level, the entry is written.
+     *
+     * @param entry The log entry to output.
+     */
+    public void processToOut(LogEntry entry) {
+        handleLogEntry(entry);
+    }
+
+    /**
+     * Handles the log entry output to all outputs.
      * 
      * @param entry The log entry to output.
      */
-    public void outputLogEntry(LogEntry entry) {
-        // Only log entries with a level higher or equal to the preferred level are output
-        if (entry.getLevel().ordinal() >= preferredLevel.ordinal()) {
-            for (OutputStream os : outputStreams) {
-                try {
-                    // Write the formatted log entry to the output stream in UTF-8 encoding
-                    os.write(format(entry, pattern).getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    // Handle any IOExceptions that occur while writing to the stream
-                    System.err.println("Failed to write to output stream: " + e.getMessage());
+    private void handleLogEntry(LogEntry entry) {
+        if (entry != null) {
+            for (LogOutputSettings output : outputs) {
+                if (entry.getLevel().ordinal() >= output.getPreferredLevel().ordinal()) {
+                    String formattedMessage = format(entry, output.getPattern());
+                    try {
+                        output.getOutputStream().write(formattedMessage.getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -177,6 +125,11 @@ public class LoggerOutput {
                 return ""; // Return empty string if entry or pattern is null
             }
 
+            if (pattern.startsWith("{colored}")) {
+                pattern = pattern.replace("{colored}", getColorFromLevel(entry.getLevel()));
+                pattern = pattern.concat("\u001B[39m");
+            }
+
             StringBuilder result = new StringBuilder();
             Matcher matcher = PLACEHOLDER_PATTERN.matcher(pattern); // Match placeholders in the pattern
 
@@ -193,6 +146,8 @@ public class LoggerOutput {
                     result.append(formatTime(new Date(entry.getTime()), dateFormat)); // Format time with specified pattern
                 } else {
                     // Handle various placeholders and append corresponding values
+                    int lastPointIndex = -1;
+                    String className;
                     switch (placeholder) {
                         case "level":
                             result.append(entry.getLevel());
@@ -201,7 +156,25 @@ public class LoggerOutput {
                             result.append(entry.getTime());
                             break;
                         case "class":
+                            className = entry.getClassName();
+                            lastPointIndex = className.lastIndexOf('.');
+                            if (lastPointIndex == -1) {
+                                result.append(className);
+                            }
+                            String simpleClassName = className.substring(lastPointIndex+1, className.length());
+                            result.append(simpleClassName);
+                            break;
+                        case "fullClass":
                             result.append(entry.getClassName());
+                            break;
+                        case "package":
+                            className = entry.getClassName();
+                            lastPointIndex = className.lastIndexOf('.');
+                            if (lastPointIndex == -1) {
+                                break;
+                            }
+                            String packageName = className.substring(0, lastPointIndex);
+                            result.append(packageName);
                             break;
                         case "method":
                             result.append(entry.getMethodName());
@@ -239,6 +212,23 @@ public class LoggerOutput {
             // Append the remaining text after the last placeholder
             result.append(pattern, lastMatchEnd, pattern.length());
             return result.toString();
+        }
+
+        private static String getColorFromLevel(LogLevel level) {
+            switch (level) {
+                case DEBUG:
+                    return "\u001B[39m";  // Default color
+                case INFO:
+                    return "\u001B[32m";  // Green
+                case WARN:
+                    return "\u001B[33m";  // Yellow
+                case ERROR:
+                    return "\u001B[31m";  // Red
+                case FATAL:
+                    return "\u001B[35m";  // Purple
+                default:
+                    return "\u001B[39m";  // Default color if level is unknown
+            }
         }
 
         /**
