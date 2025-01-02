@@ -5,7 +5,7 @@
 
     <groupId>org.theko</groupId>
     <artifactId>logger</artifactId>
-    <version>0.5.1-beta</version>
+    <version>0.6.4-beta</version>
     <packaging>jar</packaging>
 
     <name>Theko Logger Library</name>
@@ -36,8 +36,13 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <release>11</release>
+                    <source>11</source>
+                    <target>11</target>
+                    <compilerArgs>
+                        <arg>--module-path</arg>
+                        <arg>${project.build.outputDirectory}</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             
@@ -50,7 +55,7 @@
     </build>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 </project>
