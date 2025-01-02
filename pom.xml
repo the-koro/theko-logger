@@ -5,7 +5,7 @@
 
     <groupId>org.theko</groupId>
     <artifactId>logger</artifactId>
-    <version>0.6.5-beta</version>
+    <version>0.6.7-beta</version>
     <packaging>jar</packaging>
 
     <name>Theko Logger Library</name>
@@ -23,8 +23,8 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20210307</version>
-            <scope>compile</scope>
+            <version>20240303</version>
+            <type>jar</type>
             <optional>true</optional>
         </dependency>
     </dependencies>
