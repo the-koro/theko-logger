@@ -8,6 +8,16 @@ import org.json.JSONObject;
 public abstract class ExtendedLogger implements Logger {
     protected List<LogEntry> logs; // List to store all log entries
     protected int maxLogsCount = -1; // Maximum number of logs to store, -1 means no limit
+
+    public void log(LogLevel level, String message, Throwable e) {
+        this.log(level, message);
+        if (e != null) {
+            this.log(level, "Exception: " + e.toString());
+            for (StackTraceElement element : e.getStackTrace()) {
+                this.log(level, "\tat " + element.toString());
+            }
+        }
+    }
     /**
      * Sets the maximum number of logs to store.
      * If the log count exceeds this limit, older logs will be discarded.
