@@ -10,44 +10,108 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The LoggerOutput class is responsible for managing the output streams where log entries are written.
+ * It supports multiple output streams and different log formats.
+ */
 public class LoggerOutput {
-    // Constants for log patterns
+
+    /**
+     * The minimal log pattern, showing only the log level and message.
+     * Example: [INFO] This is a log message.
+     */
     public static final String MINIMAL_PATTERN = "[{level}] {message}";
+
+    /**
+     * A light log pattern that includes the time (hour, minute, second, millisecond), 
+     * log level, and the message.
+     * Example: [12:34:56:789] [INFO] | This is a log message.
+     */
     public static final String LIGHT_PATTERN = "[{time HH:mm:ss:SSS}] [{level}] | {message}";
+
+    /**
+     * The default log pattern that includes the time (hour, minute, second, millisecond),
+     * log level, the class and method name where the log was called, and the message.
+     * Example: [12:34:56:789] [INFO] | com.example.MyClass.myMethod > This is a log message.
+     */
     public static final String DEFAULT_PATTERN = "[{time HH:mm:ss:SSS}] [{level}] | {class}.{method} > {message}";
-    public static final String DETAILED_PATTERN = "[{time yyyy:MM:dd HH:mm:ss:SSS}] [{level}] | [{thread}] {class}.{method} > {message}";
+
+    /**
+     * The detailed log pattern that includes the time (year, month, day, hour, minute, second, millisecond),
+     * log level, thread name, the class and method name where the log was called, and the message.
+     * Example: [2025:01:01 12:34:56:789] [INFO] | [main] | com.example.MyClass.myMethod > This is a log message.
+     */
+    public static final String DETAILED_PATTERN = "[{time yyyy:MM:dd HH:mm:ss:SSS}] [{level}] | [{thread}] | {class}.{method} > {message}";
 
     protected List<LogOutputSettings> outputs;
 
+    /**
+     * Constructs a LoggerOutput with the specified list of output settings.
+     * 
+     * @param outputs The list of LogOutputSettings defining where logs are output.
+     */
     public LoggerOutput(List<LogOutputSettings> outputs) {
         this.outputs = outputs;
     }
 
+    /**
+     * Constructs a LoggerOutput with a single output setting.
+     * 
+     * @param output A LogOutputSettings defining a single output stream.
+     */
     public LoggerOutput(LogOutputSettings output) {
         this.outputs = new CopyOnWriteArrayList<>();
         this.outputs.add(output);
     }
 
+    /**
+     * Retrieves the list of log output settings.
+     * 
+     * @return A list of LogOutputSettings.
+     */
     public List<LogOutputSettings> getOutputs() {
         return this.outputs;
     }
 
+    /**
+     * Sets the list of log output settings.
+     * 
+     * @param outputs A list of LogOutputSettings.
+     */
     public void setOutputs(List<LogOutputSettings> outputs) {
         this.outputs = outputs;
     }
 
+    /**
+     * Adds a new log output setting.
+     * 
+     * @param output A LogOutputSettings to add.
+     */
     public void addOutput(LogOutputSettings output) {
         this.outputs.add(output);
     }
 
+    /**
+     * Removes the specified log output setting.
+     * 
+     * @param output The LogOutputSettings to remove.
+     * @return true if the output was removed, false otherwise.
+     */
     public boolean removeOutput(LogOutputSettings output) {
         return outputs.remove(output);
     }
 
+    /**
+     * Removes all log output settings.
+     */
     public void removeAllOutputs() {
         outputs.clear();
     }
 
+    /**
+     * Closes all output streams except System.out.
+     * This method ensures that the streams are properly closed to prevent resource leaks.
+     */
     public void close() {
         outputs.stream()
             .filter(output -> output != null && !output.getOutputStream().equals(System.out))
@@ -58,7 +122,7 @@ public class LoggerOutput {
                         os.close();
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    e.printStackTrace(); // Log the error to standard output
                 }
             });
         removeAllOutputs();
@@ -66,7 +130,7 @@ public class LoggerOutput {
 
     /**
      * Formats a log entry using the provided pattern.
-     *
+     * 
      * @param entry The log entry to format.
      * @param pattern The pattern used for formatting.
      * @return A formatted log entry string.
@@ -78,7 +142,7 @@ public class LoggerOutput {
     /**
      * Immediately outputs a formatted log entry to all the registered output streams.
      * If the log level of the entry is greater than or equal to the preferred level, the entry is written.
-     *
+     * 
      * @param entry The log entry to output.
      */
     public void processToOut(LogEntry entry) {
@@ -93,12 +157,14 @@ public class LoggerOutput {
     private void handleLogEntry(LogEntry entry) {
         if (entry != null) {
             for (LogOutputSettings output : outputs) {
+                // Check if the log level meets the output's preferred level
                 if (entry.getLevel().ordinal() >= output.getPreferredLevel().ordinal()) {
                     String formattedMessage = format(entry, output.getPattern());
                     try {
+                        // Write the formatted message to the output stream
                         output.getOutputStream().write(formattedMessage.getBytes(StandardCharsets.UTF_8));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        e.printStackTrace(); // Log the error to standard output
                     }
                 }
             }
@@ -109,7 +175,7 @@ public class LoggerOutput {
      * The Formatter class is responsible for formatting log entries based on a pattern.
      */
     public static class Formatter {
-        
+
         /** The pattern used to identify placeholders in the log pattern */
         private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([^}]+)}");
 
@@ -126,6 +192,7 @@ public class LoggerOutput {
             }
 
             if (pattern.startsWith("{colored}")) {
+                // Replace color placeholder and add color reset
                 pattern = pattern.replace("{colored}", getColorFromLevel(entry.getLevel()));
                 pattern = pattern.concat("\u001B[39m");
             }
@@ -161,7 +228,7 @@ public class LoggerOutput {
                             if (lastPointIndex == -1) {
                                 result.append(className);
                             }
-                            String simpleClassName = className.substring(lastPointIndex+1, className.length());
+                            String simpleClassName = className.substring(lastPointIndex + 1);
                             result.append(simpleClassName);
                             break;
                         case "fullClass":
@@ -214,6 +281,12 @@ public class LoggerOutput {
             return result.toString();
         }
 
+        /**
+         * Returns the color associated with the given log level.
+         * 
+         * @param level The log level.
+         * @return The ANSI escape code representing the color for the log level.
+         */
         private static String getColorFromLevel(LogLevel level) {
             switch (level) {
                 case DEBUG:
