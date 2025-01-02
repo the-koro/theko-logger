@@ -208,10 +208,11 @@ public class LoggerOutput {
                 return ""; // Return empty string if entry or pattern is null
             }
 
+            boolean colored = false;
+
             if (pattern.startsWith("{colored}")) {
-                // Replace color placeholder and add color reset
-                pattern = pattern.replace("{colored}", getColorFromLevel(entry.getLevel()));
-                pattern = pattern.concat("\u001B[39m");
+                colored = true;
+                pattern = pattern.replace("{colored}", "");
             }
 
             StringBuilder result = new StringBuilder();
@@ -234,7 +235,13 @@ public class LoggerOutput {
                     String className;
                     switch (placeholder) {
                         case "level":
+                            if (colored) {
+                                result.append(getColorFromLevel(entry.getLevel()));
+                            }
                             result.append(entry.getLevel());
+                            if (colored) {
+                                result.append(getColorFromLevel(LogLevel.NONE));
+                            }
                             break;
                         case "time":
                             result.append(entry.getTime());
@@ -307,7 +314,7 @@ public class LoggerOutput {
         private static String getColorFromLevel(LogLevel level) {
             switch (level) {
                 case DEBUG:
-                    return "\u001B[39m";  // Default color
+                    return "\u001B[34m";  // Blue
                 case INFO:
                     return "\u001B[32m";  // Green
                 case WARN:
