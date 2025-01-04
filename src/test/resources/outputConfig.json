@@ -1,0 +1,19 @@
+{
+    "outputs": [
+        {
+            "target": "terminal",
+            "pattern": "{colored}[{level}] {message}\n",
+            "level": "INFO"
+        },
+        {
+            "target": "file",
+            "filePath": "logs_test\\log.log",
+            "rotation": {
+                "enable": true,
+                "maxSizeMB": 10.0
+            },
+            "pattern": "[{time yyyy:MM:dd HH:mm:ss:SSS}] [{level}] | [{thread}] | [{package}.{class}.{method}] ({file}:{lineNumber}): {message}\n",
+            "level": "DEBUG"
+        }
+    ]
+}
