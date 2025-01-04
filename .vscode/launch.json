@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Test1",
+            "request": "launch",
+            "mainClass": "test.theko.logger.Test1",
+            "projectName": "theko-logger"
+        },
+        {
+            "type": "java",
+            "name": "Test2",
+            "request": "launch",
+            "mainClass": "test.theko.logger.Test2",
+            "projectName": "theko-logger",
+            "classPaths": [
+                "${workspaceFolder}/out",
+                "${workspaceFolder}/out/test"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "Test3",
+            "request": "launch",
+            "mainClass": "test.theko.logger.Test1",
+            "projectName": "theko-logger"
+        },
+        {
+            "type": "java",
+            "name": "Test4",
+            "request": "launch",
+            "mainClass": "test.theko.logger.Test1",
+            "projectName": "theko-logger"
+        }
+    ]
+}
