@@ -30,7 +30,7 @@ public class GlobalLogger {
         loggerOutput = new LoggerOutput(defaultOutputSettings);
         
         // Initialize logger with the output and log level set to 2 (INFO)
-        logger = new DefaultLogger(loggerOutput, 2);
+        logger = new DefaultLogger(loggerOutput);
     }
 
     /**
@@ -44,19 +44,51 @@ public class GlobalLogger {
     }
 
     /**
+     * Logs a message at a specified log level.
+     *
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     */
+    protected static LogEntry log(LogLevel level, String message, int stackTraceOffset) {
+        if (logger instanceof ExtendedLogger) {
+            return ((ExtendedLogger) logger).log(level, message, stackTraceOffset + 1);
+        } else {
+            return logger.log(level, message);
+        }
+    }
+
+    /**
      * Logs a message at a specified log level, including the details of an exception.
      *
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      * @param e The exception whose stack trace will be logged.
      */
-    public static void log(LogLevel level, String message, Throwable e) {
-        logger.log(level, message);
-        if (e != null) {
-            logger.log(level, "Exception: " + e.toString());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.log(level, "\tat " + element.toString());
+    public static LogEntry log(LogLevel level, String message, Throwable e) {
+        return log(level, message, e, 1);
+    }
+
+    /**
+     * Logs a message at a specified log level, including the details of an exception.
+     *
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param e The exception whose stack trace will be logged.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     */
+    protected static LogEntry log(LogLevel level, String message, Throwable e, int stackTraceOffset) {
+        if (logger instanceof ExtendedLogger) {
+            return ((ExtendedLogger) logger).log(level, message, e, stackTraceOffset+1);
+        } else {
+            LogEntry log = logger.log(level, message);
+            if (e != null) {
+                logger.log(level, "Exception: " + e.toString());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.log(level, "\tat " + element.toString());
+                }
             }
+            return log;
         }
     }
 
@@ -65,8 +97,8 @@ public class GlobalLogger {
      *
      * @param message The message to be logged.
      */
-    public static void debug(String message) {
-        logger.log(DEBUG, message);
+    public static LogEntry debug(String message) {
+        return log(DEBUG, message, 1);
     }
 
     /**
@@ -74,8 +106,8 @@ public class GlobalLogger {
      *
      * @param message The message to be logged.
      */
-    public static void info(String message) {
-        logger.log(INFO, message);
+    public static LogEntry info(String message) {
+        return log(INFO, message, 1);
     }
 
     /**
@@ -83,8 +115,8 @@ public class GlobalLogger {
      *
      * @param message The message to be logged.
      */
-    public static void warn(String message) {
-        logger.log(WARN, message);
+    public static LogEntry warn(String message) {
+        return log(WARN, message, 1);
     }
 
     /**
@@ -92,8 +124,8 @@ public class GlobalLogger {
      *
      * @param message The message to be logged.
      */
-    public static void error(String message) {
-        logger.log(ERROR, message);
+    public static LogEntry error(String message) {
+        return log(ERROR, message, 1);
     }
     
     /**
@@ -112,6 +144,20 @@ public class GlobalLogger {
      */
     public static LoggerOutput getLoggerOutput() {
         return loggerOutput;
+    }
+
+    public static void setLogger(Logger logger, boolean addOutputToLogger) {
+        GlobalLogger.logger = logger;
+        if (addOutputToLogger && logger instanceof DefaultLogger) {
+            ((DefaultLogger) GlobalLogger.logger).setLoggerOutput(loggerOutput);
+        }
+    }
+
+    public static void setLoggerOutput(LoggerOutput loggerOutput) {
+        GlobalLogger.loggerOutput = loggerOutput;
+        if (logger instanceof DefaultLogger) {
+            ((DefaultLogger) logger).setLoggerOutput(loggerOutput);
+        }
     }
 
     /**
@@ -176,7 +222,7 @@ public class GlobalLogger {
      * 
      * @param maxLogsCount The maximum number of logs to keep. Should be greater than 5 or -1 to disable.
      */
-    public void setMaxLogsCount(int maxLogsCount) {
+    public static void setMaxLogsCount(int maxLogsCount) {
         if (logger instanceof ExtendedLogger) {
             ((ExtendedLogger) logger).setMaxLogsCount(maxLogsCount);
         }
@@ -185,7 +231,7 @@ public class GlobalLogger {
     /**
      * Disables the maximum log count, allowing logs to accumulate indefinitely.
      */
-    public void disableMaxLogsCount() {
+    public static void disableMaxLogsCount() {
         if (logger instanceof ExtendedLogger) {
             ((ExtendedLogger) logger).disableMaxLogsCount();
         }
