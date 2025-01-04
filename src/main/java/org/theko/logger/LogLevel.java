@@ -53,4 +53,23 @@ public enum LogLevel {
     public String getLevel() {
         return level;
     }
+
+    /**
+     * Converts a string to its corresponding LogLevel.
+     * 
+     * @param string The string representation of the log level.
+     * @return The matching LogLevel.
+     * @throws IllegalArgumentException if the string does not match any LogLevel.
+     */
+    public static LogLevel fromString(String string) {
+        if (string == null || string.trim().isEmpty()) {
+            throw new IllegalArgumentException("LogLevel cannot be null or empty");
+        }
+        for (LogLevel logLevel : LogLevel.values()) {
+            if (logLevel.level.equalsIgnoreCase(string)) {
+                return logLevel;
+            }
+        }
+        throw new IllegalArgumentException("Unknown LogLevel: " + string);
+    }
 }
