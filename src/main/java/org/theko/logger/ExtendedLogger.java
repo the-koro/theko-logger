@@ -16,6 +16,8 @@ public abstract class ExtendedLogger implements Logger {
     // Maximum number of logs to store; -1 means no limit
     protected int maxLogsCount = -1;
 
+    protected static final String className = ExtendedLogger.class.getName();
+
     /**
      * Logs a message at the specified log level, including details of an exception if provided.
      *
@@ -24,13 +26,80 @@ public abstract class ExtendedLogger implements Logger {
      * @param e The exception whose stack trace will be logged, if applicable.
      */
     public void log(LogLevel level, String message, Throwable e) {
-        this.log(level, message);
+        this.log(level, message, e, 2);
+    }
+
+    /**
+     * Logs a message at the specified log level, including details of an exception if provided.
+     *
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param e The exception whose stack trace will be logged, if applicable.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     */
+    public LogEntry log(LogLevel level, String message, Throwable e, int stackTraceOffset) {
+        LogEntry log = this.log(level, message, stackTraceOffset+2);
         if (e != null) {
-            this.log(level, "Exception: " + e.toString());
+            this.log(level, "Exception: " + e.toString(), stackTraceOffset+2);
             for (StackTraceElement element : e.getStackTrace()) {
-                this.log(level, "\tat " + element.toString());
+                this.log(level, "\tat " + element.toString(), stackTraceOffset+2);
             }
         }
+        return log;
+    }
+
+    /**
+     * Logs a message with the specified log level. The log entry will include the caller's information.
+     * 
+     * @param level   The log level (e.g., DEBUG, ERROR, etc.).
+     * @param message The message to log.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     */
+    public LogEntry log(LogLevel level, String message, int stackTraceOffset) {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();  // Get the current thread's stack trace
+        StackTraceElement callerElement = null;
+
+        // Iterate through the stack trace to find the method that called 'log'
+        for (int i = 0; i < stackTrace.length; i++) {
+            StackTraceElement element = stackTrace[i];
+            
+            if (element.getMethodName().equals("log") && element.getClassName().equals(className)) {
+                if (i + stackTraceOffset < stackTrace.length) {
+                    callerElement = stackTrace[i + stackTraceOffset];  // Get the caller method's stack trace element
+                }
+                break;
+            }
+        }
+
+        // Create a LogEntry with the gathered information
+        LogEntry log = new LogEntry(
+                level,
+                System.currentTimeMillis(),
+                new CallerInfo(callerElement, Thread.currentThread().getName()),
+                message
+        );
+        
+        logs.add(log);  // Add the new log entry to the list
+
+        // If maxLogsCount is set, trim the log list to respect the limit
+        if (maxLogsCount != -1) {
+            if (logs.size() > maxLogsCount) {
+                logs.subList(0, logs.size() - maxLogsCount).clear();  // Remove excess logs
+            }
+        }
+
+        return log;
+    }
+
+    /**
+     * Logs a message with the specified log level. The log entry will include the caller's information.
+     * 
+     * @param level   The log level (e.g., DEBUG, ERROR, etc.).
+     * @param message The message to log.
+     */
+    @Override
+    public LogEntry log(LogLevel level, String message) {
+        return this.log(level, message, 2);
     }
 
     /**
@@ -65,5 +134,28 @@ public abstract class ExtendedLogger implements Logger {
         JSONArray logsJsonArray = LogUtility.exportLogsToJSON(this.logs);
         allLogsJson.put("logs", logsJsonArray);  // Add the logs array under the "logs" key
         return allLogsJson;
+    }
+
+    /**
+     * Retrieves the last log entry, or null if no logs exist.
+     * 
+     * @return The last log entry, or null if no logs are present.
+     */
+    @Override
+    public LogEntry getLastLog() {
+        if (logs == null || logs.isEmpty()) {
+            return null;
+        }
+        return logs.get(logs.size() - 1);  // Return the most recent log entry
+    }
+
+    /**
+     * Retrieves all log entries.
+     * 
+     * @return A list containing all log entries.
+     */
+    @Override
+    public List<LogEntry> getAllLogs() {
+        return logs;
     }
 }
