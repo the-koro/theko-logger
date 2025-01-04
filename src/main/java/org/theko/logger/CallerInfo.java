@@ -52,6 +52,9 @@ public class CallerInfo implements Serializable {
      * @param threadName        The thread name from which the log was called.
      */
     public CallerInfo(StackTraceElement stackTraceElement, String threadName) {
+        if (stackTraceElement == null) {
+            throw new IllegalArgumentException("Stack trace element cannot be null.");
+        }
         this.className = stackTraceElement.getClassName();
         this.methodName = stackTraceElement.getMethodName();
         this.isNativeMethod = stackTraceElement.isNativeMethod();
