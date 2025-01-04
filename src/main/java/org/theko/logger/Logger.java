@@ -10,15 +10,17 @@ public interface Logger {
     /**
      * Logs a message with a specified log level.
      * 
-     * @param level   The log level for this message (e.g., DEBUG, INFO, ERROR).
+     * @param level   The {@link LogLevel} for this message (e.g., DEBUG, INFO, ERROR).
      * @param message The message to log.
+     * 
+     * @return Created {@link LogEntry} from log method.
      */
-    void log(LogLevel level, String message);
+    LogEntry log(LogLevel level, String message);
 
     /**
      * Retrieves the last log entry.
      * 
-     * @return The last log entry.
+     * @return The last {@link LogEntry}.
      */
     LogEntry getLastLog();
 
