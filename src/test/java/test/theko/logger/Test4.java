@@ -1,29 +1,21 @@
 package test.theko.logger;
 
-import static org.theko.logger.LoggerOutput.*;
-
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.theko.logger.GlobalLogger;
 import org.theko.logger.LogLevel;
-import org.theko.logger.LogOutputSettings;
+import org.theko.logger.LoggerOutput;
 
 public class Test4 {
     public static void main(String[] args) throws FileNotFoundException {
-        GlobalLogger.getOutputsWith(System.out).forEach(output -> {
-            output.setPattern("{colored}" + MINIMAL_PATTERN + "\n");
-            output.setPreferredLevel(LogLevel.DEBUG);
-        });
-        
-        LogOutputSettings fileOut = new LogOutputSettings(
-            new FileOutputStream("test5.log"),
-            DETAILED_PATTERN + "\n",
-            LogLevel.DEBUG
-        );
-
-        GlobalLogger.addOutput(fileOut);
+        InputStream is = Test3.class.getClassLoader().getResourceAsStream("outputConfig.json");
+        GlobalLogger.setLoggerOutput(LoggerOutput.loadFrom(
+            new JSONObject(new JSONTokener(is))
+        ));
 
         GlobalLogger.log(LogLevel.DEBUG, "This is debug message.");
         GlobalLogger.log(LogLevel.INFO, "This is info message.");

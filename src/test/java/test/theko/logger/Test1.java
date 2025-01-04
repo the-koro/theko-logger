@@ -1,11 +1,12 @@
 package test.theko.logger;
 
-import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Scanner;
 
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.theko.logger.GlobalLogger;
 import org.theko.logger.LogLevel;
-import org.theko.logger.LogOutputSettings;
 import org.theko.logger.LoggerOutput;
 
 public class Test1 {
@@ -13,17 +14,12 @@ public class Test1 {
         // Declare scanner object to read user input
         Scanner scanner = null;
 
-        try {
-            GlobalLogger.getOutputsWith(System.out).stream().forEach(output -> {
-                output.setPreferredLevel(LogLevel.DEBUG);
-                output.setPattern("{colored} " + output.getPattern());
-            });
+        InputStream is = Test3.class.getClassLoader().getResourceAsStream("outputConfig.json");
+        GlobalLogger.setLoggerOutput(LoggerOutput.loadFrom(
+            new JSONObject(new JSONTokener(is))
+        ));
 
-            GlobalLogger.addOutput(new LogOutputSettings(
-                new FileOutputStream("test1.log"),
-                LoggerOutput.DETAILED_PATTERN + "\n",
-                LogLevel.DEBUG
-            ));
+        try {
             
             // Log a debug message to indicate the log file has been added
             GlobalLogger.debug("Log file added to output streams.");
