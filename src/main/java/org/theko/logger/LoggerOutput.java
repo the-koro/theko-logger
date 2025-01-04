@@ -1,5 +1,7 @@
 package org.theko.logger;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +12,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.theko.logger.out.RotatingFileOutputStream;
 
 /**
  * The LoggerOutput class is responsible for managing the output streams where log entries are written.
@@ -63,6 +69,84 @@ public class LoggerOutput {
     public LoggerOutput(LogOutputSettings output) {
         this.outputs = new CopyOnWriteArrayList<>();
         this.outputs.add(output);
+    }
+
+    /**
+     * Loads LoggerOutput settings from a JSON configuration.
+     * 
+     * @param configuration The JSON object containing the logger configuration.
+     * @return A LoggerOutput instance initialized with the settings from the configuration.
+     * @throws IllegalArgumentException if the configuration is invalid.
+     */
+    public static LoggerOutput loadFrom(JSONObject configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+
+        List<LogOutputSettings> outputs = new CopyOnWriteArrayList<>();
+        try {
+            JSONArray outputsArray = configuration.optJSONArray("outputs");
+            if (outputsArray == null) {
+                throw new IllegalArgumentException("'outputs' key is missing or not a valid array");
+            }
+
+            for (int i = 0; i < outputsArray.length(); i++) {
+                Object output = outputsArray.get(i);
+
+                if (output instanceof JSONObject) {
+                    JSONObject jsonConfig = (JSONObject) output;
+                    String pattern = jsonConfig.optString("pattern", null);
+                    String level = jsonConfig.optString("level", null);
+                    String target = jsonConfig.optString("target", null);
+
+                    if (pattern == null || level == null) {
+                        throw new IllegalArgumentException("Each output must contain 'pattern' and 'level' keys (output index: " + i + ")");
+                    }
+
+                    OutputStream os = null;
+                    if (target != null) {
+                        if (target.equalsIgnoreCase("terminal")) {
+                            os = System.out;
+                        } else if (target.equalsIgnoreCase("file")) {
+                            String filePath = jsonConfig.optString("filePath", null);
+                            if (filePath == null) {
+                                throw new IllegalArgumentException("File path must be specified for output index: " + i);
+                            }
+
+                            File outFile = new File(filePath);
+                            outFile.getParentFile().mkdirs();
+                            
+                            // Rotation settings
+                            JSONObject rotationConfig = jsonConfig.optJSONObject("rotation");
+                            boolean rotationEnabled = rotationConfig != null;
+                            if (rotationEnabled) {
+                                rotationEnabled = rotationConfig.optBoolean("enable", false);
+                                long maxSizeMB = rotationConfig.optLong("maxSizeMB", 10); // Default 10 MB
+                                os = new RotatingFileOutputStream(filePath, maxSizeMB * 1024 * 1024); // Size in bytes
+                            } else {
+                                os = new FileOutputStream(filePath, true); // Regular file output stream (no rotation)
+                            }
+                        }
+                    }
+
+                    if (os == null) {
+                        System.out.println("NOLIK");
+                    }
+
+                    LogOutputSettings logOutput = new LogOutputSettings(os);
+                    logOutput.setPattern(pattern);
+                    logOutput.setPreferredLevel(LogLevel.fromString(level));
+
+                    outputs.add(logOutput);
+                } else {
+                    throw new IllegalArgumentException("Each output must be a JSON object (invalid type at index: " + i + ")");
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse LoggerOutput configuration", e);
+        }
+
+        return new LoggerOutput(outputs);
     }
 
     /**
@@ -178,8 +262,13 @@ public class LoggerOutput {
                 if (entry.getLevel().ordinal() >= output.getPreferredLevel().ordinal()) {
                     String formattedMessage = format(entry, output.getPattern());
                     try {
+                        OutputStream os = output.getOutputStream();
+                        if (os == null) {
+                            System.err.println("The output stream is null.");
+                            continue;
+                        }
                         // Write the formatted message to the output stream
-                        output.getOutputStream().write(formattedMessage.getBytes(StandardCharsets.UTF_8));
+                        os.write(formattedMessage.getBytes(StandardCharsets.UTF_8));
                     } catch (IOException e) {
                         e.printStackTrace(); // Log the error to standard output
                     }
