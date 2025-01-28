@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import org.json.JSONArray;
 
 public class LogUtility {
+    protected static final long APPLICATION_START_MILLIS = System.currentTimeMillis();
+
      /**
      * Sorts the provided list of log entries based on the specified sorting criteria.
      * 
