@@ -260,7 +260,7 @@ public class LoggerOutput {
             for (LogOutputSettings output : outputs) {
                 // Check if the log level meets the output's preferred level
                 if (entry.getLevel().ordinal() >= output.getPreferredLevel().ordinal()) {
-                    String formattedMessage = format(entry, output.getPattern());
+                    String formattedMessage = format(entry, output.getPattern(entry.getLevel()));
                     try {
                         OutputStream os = output.getOutputStream();
                         if (os == null) {
