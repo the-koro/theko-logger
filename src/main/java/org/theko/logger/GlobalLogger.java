@@ -22,8 +22,8 @@ public class GlobalLogger {
     // Static initializer block to set up the default logger and output
     static {
         LogOutputSettings defaultOutputSettings = new LogOutputSettings(
-                System.out,
-                LoggerOutput.MINIMAL_PATTERN + "\n"
+                "DefaultLogOutput",
+                System.out
         );
         
         // Initialize loggerOutput with default settings
