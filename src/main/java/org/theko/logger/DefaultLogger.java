@@ -49,6 +49,10 @@ public class DefaultLogger extends ExtendedLogger {
         return log;
     }
 
+    protected LogEntry createLogEntry(LogLevel level, String message, int stackTraceOffset) {
+        return super.log(level, message, stackTraceOffset+2);
+    }
+
     /**
      * Sets the LoggerOutput that handles the output of log entries.
      * 
