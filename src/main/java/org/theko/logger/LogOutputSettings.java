@@ -2,36 +2,53 @@ package org.theko.logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class representing the settings for logging output.
  */
 public class LogOutputSettings {
+    protected String name;
     protected OutputStream os;
-    protected String pattern;
+    protected Map<LogLevel, String> patternsMap;
     protected LogLevel preferredLevel;
+    //protected Rotation rotationSettings;
 
     /**
      * Constructor for LoggerOutputSettings.
      *
+     * @param name the name of the output
      * @param os the OutputStream for logging
      * @param pattern the log pattern
      * @param preferredLevel the log level to prefer
      */
-    public LogOutputSettings(OutputStream os, String pattern, LogLevel preferredLevel) {
+    public LogOutputSettings(String name, OutputStream os, Map<LogLevel, String> patternsMap, LogLevel preferredLevel) {
+        this.name = name;
         this.os = os;
-        this.pattern = pattern;
+        this.patternsMap = patternsMap;
         this.preferredLevel = preferredLevel;
     }
 
     /**
      * Constructor with default log level (WARN).
      *
+     * @param name the name of the output
      * @param os the OutputStream for logging
      * @param pattern the log pattern
      */
-    public LogOutputSettings(OutputStream os, String pattern) {
-        this(os, pattern, LogLevel.WARN);
+    public LogOutputSettings(String name, OutputStream os, Map<LogLevel, String> patternsMap) {
+        this(name, os, patternsMap, LogLevel.WARN);
+    }
+
+    /**
+     * Constructor with default pattern (MINIMAL_PATTERN) and log level (WARN).
+     *
+     * @param name the name of the output
+     * @param os the OutputStream for logging
+     */
+    public LogOutputSettings(String name, OutputStream os) {
+        this(name, os, getDefaultPatternsMap(), LogLevel.WARN);
     }
 
     /**
@@ -40,19 +57,52 @@ public class LogOutputSettings {
      * @param os the OutputStream for logging
      */
     public LogOutputSettings(OutputStream os) {
-        this(os, LoggerOutput.MINIMAL_PATTERN, LogLevel.WARN);
+        this(os.toString(), os, getDefaultPatternsMap(), LogLevel.WARN);
+    }
+
+    public static Map<LogLevel, String> getDefaultPatternsMap() {
+        Map<LogLevel, String> patternsMap = new HashMap<>();
+        patternsMap.put(LogLevel.DEBUG, "[{level}] {message}\n");
+        patternsMap.put(LogLevel.INFO, "[{level}] {message}\n");
+        patternsMap.put(LogLevel.WARN, "[{level}] ({file}:{lineNumber}) {message}\n");
+        patternsMap.put(LogLevel.ERROR, "[{level}] [{thread}] | ({file}:{lineNumber}) {message}\n");
+        patternsMap.put(LogLevel.FATAL, "[{level}] [{thread}] | ({file}:{lineNumber}) {message}\n");
+        // Skip LogLevel.NONE
+        return patternsMap;
+    }
+
+    public static Map<LogLevel, String> getMapFromSinglePattern(String pattern) {
+        Map<LogLevel, String> patternsMap = new HashMap<>();
+        patternsMap.put(LogLevel.DEBUG, pattern);
+        patternsMap.put(LogLevel.INFO, pattern);
+        patternsMap.put(LogLevel.WARN, pattern);
+        patternsMap.put(LogLevel.ERROR, pattern);
+        patternsMap.put(LogLevel.FATAL, pattern);
+        // Skip LogLevel.NONE
+        return patternsMap;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public OutputStream getOutputStream() {
         return os;
     }
 
-    public String getPattern() {
-        return pattern;
+    public Map<LogLevel, String> getPatternsMap() {
+        return patternsMap;
     }
 
     public LogLevel getPreferredLevel() {
         return preferredLevel;
+    }
+
+    public void setName(String name) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("The name is empty");
+        }
+        this.name = name;
     }
 
     public void setOutputStream(OutputStream os) {
@@ -62,11 +112,18 @@ public class LogOutputSettings {
         this.os = os;
     }
 
-    public void setPattern(String pattern) {
-        if (pattern == null) {
-            throw new IllegalArgumentException("Pattern cannot be null");
+    public void setPattern(Map<LogLevel, String> patternsMap) {
+        if (patternsMap == null || patternsMap.isEmpty()) {
+            throw new IllegalArgumentException("Patterns map cannot be null");
         }
-        this.pattern = pattern;
+        this.patternsMap = patternsMap;
+    }
+
+    public void setPattern(String pattern) {
+        if (pattern == null || pattern.isEmpty()) {
+            throw new IllegalArgumentException("Patterns map cannot be null");
+        }
+        this.patternsMap = getMapFromSinglePattern(pattern);
     }
 
     public void setPreferredLevel(LogLevel preferredLevel) {
@@ -76,12 +133,16 @@ public class LogOutputSettings {
         this.preferredLevel = preferredLevel;
     }
 
+    public String getPattern(LogLevel level) {
+        return patternsMap.get(level);
+    }
+
     /**
      * Closes the underlying OutputStream, if it is not already closed.
      * @throws IOException if an I/O error occurs during closing
      */
     public void close() throws IOException {
-        if (os != null) {
+        if (os != null && !os.equals(System.out)) {
             os.close();
         }
     }
