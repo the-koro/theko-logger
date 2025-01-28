@@ -9,7 +9,7 @@ import org.json.JSONObject;
  * The ExtendedLogger class extends the Logger interface, adding functionality for managing and storing log entries.
  * It provides methods for setting a maximum log count, disabling this limit, and exporting logs as a JSON array.
  */
-public abstract class ExtendedLogger implements Logger {
+public class ExtendedLogger implements Logger {
     // List to store all log entries
     protected List<LogEntry> logs;
     
