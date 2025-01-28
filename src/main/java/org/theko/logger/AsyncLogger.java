@@ -1,114 +1,93 @@
 package org.theko.logger;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
- * AsyncLogger is the implementation of the Logger interface.
- * It manages logging entries asynchronously, storing them in memory and optionally outputting them via LoggerOutput.
+ * AsyncLogger extends DefaultLogger to handle logging asynchronously.
+ * Log entries are created synchronously and added to a queue for asynchronous processing.
  */
 public class AsyncLogger extends DefaultLogger {
-    protected final LinkedBlockingQueue<LogEntry> logQueue; // Queue for logs to be processed asynchronously
-    private final ExecutorService executorService; // Thread pool for asynchronous logging
-
-    protected static final int STACK_TRACE_OFFSET_DEFAULT = 1; // Default offset for stack trace
+    private final BlockingQueue<LogEntry> logQueue;
+    private final ExecutorService executor;
 
     /**
-     * Constructs an AsyncLogger with the specified LoggerOutput.
+     * Constructs an AsyncLogger with a specified LoggerOutput and thread pool size.
      *
-     * @param loggerOutput     The LoggerOutput to handle log display/output.
+     * @param loggerOutput The LoggerOutput to handle log display/output.
      */
     public AsyncLogger(LoggerOutput loggerOutput) {
         super(loggerOutput);
-        this.logQueue = new LinkedBlockingQueue<>(8000); // Thread-safe queue for log entries
-        this.executorService = Executors.newSingleThreadExecutor(); // Single-thread executor for async processing
-        startLogProcessing();
+        this.logQueue = new LinkedBlockingQueue<>();
+        this.executor = Executors.newSingleThreadExecutor();
+        startLogProcessor();
     }
 
     /**
-     * Default constructor, initializes with null LoggerOutput and default stack trace offset.
+     * Constructs an AsyncLogger with thread pool size.
      */
     public AsyncLogger() {
-        this(null);
+        super();
+        this.logQueue = new LinkedBlockingQueue<>();
+        this.executor = Executors.newSingleThreadExecutor();
+        startLogProcessor();
     }
 
     /**
-     * Starts processing logs from the queue asynchronously.
+     * Starts the log processor to handle log entries asynchronously.
      */
-    private void startLogProcessing() {
-        executorService.submit(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    LogEntry log = logQueue.take(); // Blocks if the queue is empty
-                    processLog(log);
-                } catch (InterruptedException e) {
-                    System.out.println("A");
-                    Thread.currentThread().interrupt(); // Handle thread interruption properly
-                    break;
+    private void startLogProcessor() {
+        executor.submit(() -> {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    LogEntry log = logQueue.take(); // Block until a log is available
+                    if (loggerOutput != null) {
+                        loggerOutput.processToOut(log);
+                    }
+                    if (onLogCreated != null) {
+                        onLogCreated.accept(log);
+                    }
                 }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // Handle graceful shutdown
             }
         });
     }
 
-    /**
-     * Processes a log entry: adds it to the list, trims the list if needed, outputs via LoggerOutput, and calls the consumer.
-     *
-     * @param log The log entry to process.
-     */
-    private void processLog(LogEntry log) {
-        logs.add(log); // Add to the log list
+    @Override
+    public LogEntry log(LogLevel level, String message, int stackTraceOffset) {
+        LogEntry log = createLogEntry(level, message, stackTraceOffset);
+        logQueue.offer(log); // Add log to the processing queue
+        return log;
+    }
 
-        if (logQueue.remainingCapacity() == 0) {
-            logQueue.poll(); // Remove the oldest log entry if the queue is full
-        }
-        //logQueue.offer(log); // Add the new log entry
-    
-        // Trim the list if maxLogsCount is set
-        if (maxLogsCount != -1) {
-            while (logs.size() > maxLogsCount) {
-                logs.remove(0); // Remove the oldest log entry
+    public void drain() throws InterruptedException {
+        while (!logQueue.isEmpty()) {
+            LogEntry log = logQueue.take(); // Block until a log is available
+            if (loggerOutput != null) {
+                loggerOutput.processToOut(log);
+            }
+            if (onLogCreated != null) {
+                onLogCreated.accept(log);
             }
         }
-    
-        // Output the log entry using LoggerOutput if available
-        if (loggerOutput != null) {
-            loggerOutput.processToOut(log);
-        }
-    
-        // Process the log entry using the consumer if set
-        if (onLogCreated != null) {
-            onLogCreated.accept(log);
-        }
     }
 
     /**
-     * Drains all logs from the queue, processes them, and removes them.
-     * This method ensures that all logs in the queue are processed and output immediately,
-     * clearing the queue in the process.
-     */
-    public void drain() throws InterruptedException {
-        // Create a CountDownLatch to wait for all logs to be processed
-        CountDownLatch latch = new CountDownLatch(logQueue.size());
-
-        // Process and clear the queue asynchronously
-        while (!logQueue.isEmpty()) {
-            LogEntry log = logQueue.take();  // Blocking call until a log is available
-            processLog(log);  // Process the log
-
-            // Decrement the latch after processing each log entry
-            latch.countDown();
-        }
-
-        // Block the current thread until all logs are processed
-        latch.await();
-    }
-
-    /**
-     * Shuts down the executor service, stopping asynchronous logging.
+     * Shuts down the logger's executor service.
+     * This method should be called when the logger is no longer needed to release resources.
      */
     public void shutdown() {
-        executorService.shutdownNow();
+        executor.shutdownNow();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                System.err.println("AsyncLogger did not terminate in the specified time.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
