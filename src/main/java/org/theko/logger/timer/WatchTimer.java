@@ -25,7 +25,7 @@ public class WatchTimer {
      * Starts the timer by recording the current time in nanoseconds.
      * Resets the end time to -1, indicating that the timer is in progress.
      */
-    public void start() {
+    public synchronized void start() {
         this.startTime = System.nanoTime(); // Record the start time.
         this.endTime = -1; // Reset the end time to indicate the timer is running.
     }
@@ -34,7 +34,7 @@ public class WatchTimer {
      * Stops the timer by recording the current time in nanoseconds.
      * Throws an exception if the timer was not started before stopping.
      */
-    public void stop() {
+    public synchronized void stop() {
         if (startTime == -1) {
             throw new IllegalStateException("Timer wasn't started.");
         }
@@ -46,9 +46,11 @@ public class WatchTimer {
      * @return The elapsed time in nanoseconds.
      * @throws IllegalStateException if the timer hasn't been started and stopped properly.
      */
-    public long getElapsedNanos() {
-        if (startTime == -1 || endTime == -1) {
-            throw new IllegalStateException("Timer hasn't been started and stopped properly.");
+    public synchronized long getElapsedNanos() {
+        if (startTime == -1) {
+            throw new IllegalStateException("Timer hasn't been started properly.");
+        } else if (endTime == -1) {
+            throw new IllegalStateException("Timer hasn't been stopped properly.");
         }
         return this.endTime - this.startTime; // Calculate and return the elapsed time.
     }
@@ -59,7 +61,7 @@ public class WatchTimer {
      * @return The elapsed time in milliseconds.
      * @throws IllegalStateException if the timer hasn't been started and stopped properly.
      */
-    public long getElapsedMillis() {
+    public synchronized long getElapsedMillis() {
         return getElapsedNanos() / 1_000_000; // Convert nanoseconds to milliseconds.
     }
 
