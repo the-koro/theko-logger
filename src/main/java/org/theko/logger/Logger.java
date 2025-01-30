@@ -8,12 +8,23 @@ import java.util.List;
  */
 public interface Logger {
     /**
+     * Logs a message with a specified log level and tags.
+     * 
+     * @param level   The {@link LogLevel} for this message (e.g., {@code DEBUG}, {@code INFO}, {@code ERROR}).
+     * @param message The message to log.
+     * @param tags    The tags associated with the log entry.
+     * 
+     * @return The created {@link LogEntry} from the log method.
+     */
+    LogEntry log(LogLevel level, String message, String... tags);
+
+    /**
      * Logs a message with a specified log level.
      * 
-     * @param level   The {@link LogLevel} for this message (e.g., DEBUG, INFO, ERROR).
+     * @param level   The {@link LogLevel} for this message (e.g., {@code DEBUG}, {@code INFO}, {@code ERROR}).
      * @param message The message to log.
      * 
-     * @return Created {@link LogEntry} from log method.
+     * @return The created {@link LogEntry} from the log method.
      */
     LogEntry log(LogLevel level, String message);
 
@@ -27,7 +38,7 @@ public interface Logger {
     /**
      * Retrieves all log entries.
      * 
-     * @return A list of all log entries.
+     * @return A list of all {@link LogEntry} objects.
      */
     List<LogEntry> getAllLogs();
 }
