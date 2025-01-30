@@ -1,26 +1,29 @@
 package org.theko.logger;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * The ExtendedLogger class extends the Logger interface, adding functionality for managing and storing log entries.
+ * The ExtendedLogger class implements the Logger interface, adding functionality for managing and storing log entries.
  * It provides methods for setting a maximum log count, disabling this limit, and exporting logs as a JSON array.
  */
 public class ExtendedLogger implements Logger {
     // List to store all log entries
     protected List<LogEntry> logs;
-    
+
     // Maximum number of logs to store; -1 means no limit
     protected int maxLogsCount = -1;
 
+    // Class name for identifying stack trace information
     protected static final String className = ExtendedLogger.class.getName();
 
     /**
      * Logs a message at the specified log level, including details of an exception if provided.
-     *
+     * 
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      * @param e The exception whose stack trace will be logged, if applicable.
@@ -31,61 +34,90 @@ public class ExtendedLogger implements Logger {
 
     /**
      * Logs a message at the specified log level, including details of an exception if provided.
-     *
+     * 
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      * @param e The exception whose stack trace will be logged, if applicable.
      * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The log entry created.
      */
     public LogEntry log(LogLevel level, String message, Throwable e, int stackTraceOffset) {
-        LogEntry log = this.log(level, message, stackTraceOffset+2);
+        return this.log(level, message, e, new String[0], stackTraceOffset + 1);
+    }
+
+    /**
+     * Logs a message at the specified log level, including details of an exception if provided.
+     * The message is logged with additional tags and stack trace offset.
+     * 
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param e The exception whose stack trace will be logged, if applicable.
+     * @param tags Additional tags associated with the log entry.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The log entry created.
+     */
+    public LogEntry log(LogLevel level, String message, Throwable e, String[] tags, int stackTraceOffset) {
+        LogEntry log = this.log(level, message, tags, stackTraceOffset + 2);
         if (e != null) {
-            this.log(level, "Exception: " + e.toString(), stackTraceOffset+2);
+            this.log(level, "Exception: " + e.toString(), tags, stackTraceOffset + 2);
             for (StackTraceElement element : e.getStackTrace()) {
-                this.log(level, "\tat " + element.toString(), stackTraceOffset+2);
+                this.log(level, "\tat " + element.toString(), tags, stackTraceOffset + 2);
             }
         }
         return log;
     }
 
     /**
-     * Logs a message with the specified log level. The log entry will include the caller's information.
+     * Logs a message at the specified log level with additional stack trace offset.
      * 
-     * @param level   The log level (e.g., DEBUG, ERROR, etc.).
-     * @param message The message to log.
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
      * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The log entry created.
      */
     public LogEntry log(LogLevel level, String message, int stackTraceOffset) {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();  // Get the current thread's stack trace
+        return this.log(level, message, new String[0], stackTraceOffset + 1);
+    }
+
+    /**
+     * Logs a message with the specified log level. The log entry will include the caller's information.
+     * 
+     * @param level The log level (e.g., DEBUG, ERROR, etc.).
+     * @param message The message to log.
+     * @param tags Additional tags associated with the log entry.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The log entry created.
+     */
+    public LogEntry log(LogLevel level, String message, String[] tags, int stackTraceOffset) {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         StackTraceElement callerElement = null;
 
-        // Iterate through the stack trace to find the method that called 'log'
         for (int i = 0; i < stackTrace.length; i++) {
             StackTraceElement element = stackTrace[i];
-            
             if (element.getMethodName().equals("log") && element.getClassName().equals(className)) {
                 if (i + stackTraceOffset < stackTrace.length) {
-                    callerElement = stackTrace[i + stackTraceOffset];  // Get the caller method's stack trace element
+                    callerElement = stackTrace[i + stackTraceOffset];
                 }
                 break;
             }
         }
 
-        // Create a LogEntry with the gathered information
+        // Ensure tags are not null
+        List<String> tagList = (tags != null) ? new ArrayList<>(Arrays.asList(tags)) : new ArrayList<>();
+
         LogEntry log = new LogEntry(
                 level,
                 System.currentTimeMillis(),
                 new CallerInfo(callerElement, Thread.currentThread().getName()),
-                message
+                message,
+                tagList
         );
-        
-        logs.add(log);  // Add the new log entry to the list
 
-        // If maxLogsCount is set, trim the log list to respect the limit
-        if (maxLogsCount != -1) {
-            if (logs.size() > maxLogsCount) {
-                logs.subList(0, logs.size() - maxLogsCount).clear();  // Remove excess logs
-            }
+        logs.add(log);
+
+        // Limit the number of stored logs if maxLogsCount is set
+        if (maxLogsCount != -1 && logs.size() > maxLogsCount) {
+            logs.subList(0, logs.size() - maxLogsCount).clear();
         }
 
         return log;
@@ -94,12 +126,26 @@ public class ExtendedLogger implements Logger {
     /**
      * Logs a message with the specified log level. The log entry will include the caller's information.
      * 
-     * @param level   The log level (e.g., DEBUG, ERROR, etc.).
+     * @param level The log level (e.g., DEBUG, ERROR, etc.).
      * @param message The message to log.
+     * @return The log entry created.
      */
     @Override
     public LogEntry log(LogLevel level, String message) {
         return this.log(level, message, 2);
+    }
+
+    /**
+     * Logs a message with the specified log level and associated tags.
+     * 
+     * @param level The log level (e.g., DEBUG, ERROR, etc.).
+     * @param message The message to log.
+     * @param tags The tags associated with the log entry.
+     * @return The log entry created.
+     */
+    @Override
+    public LogEntry log(LogLevel level, String message, String... tags) {
+        return this.log(level, message, tags, 2);
     }
 
     /**
