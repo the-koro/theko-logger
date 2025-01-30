@@ -1,12 +1,14 @@
 package org.theko.logger;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONObject;
 
 /**
  * Represents a single log entry containing information about the log level, timestamp, 
- * caller information, and the actual log message.
+ * caller information, tags, and the actual log message.
  */
 public class LogEntry implements Serializable {
     private static final long serialVersionUID = 1L;  // Version control for serialization
@@ -15,6 +17,7 @@ public class LogEntry implements Serializable {
     private final long time;  // Timestamp of when the log entry was created
     private final CallerInfo caller;  // Information about the caller (class, method, etc.)
     private final String message;  // The log message
+    private final List<String> tags;  // Tags associated with the log entry for categorization or filtering
 
     /**
      * Constructs a LogEntry with all the required details.
@@ -23,8 +26,9 @@ public class LogEntry implements Serializable {
      * @param time    The time when the log entry was created.
      * @param caller  The caller information for the log entry.
      * @param message The log message.
+     * @param tags    A list of tags associated with the log entry.
      */
-    public LogEntry(LogLevel level, long time, CallerInfo caller, String message) {
+    public LogEntry(LogLevel level, long time, CallerInfo caller, String message, List<String> tags) {
         if (level == LogLevel.NONE) {
             throw new IllegalArgumentException("Log level cannot be NONE.");
         }
@@ -33,11 +37,24 @@ public class LogEntry implements Serializable {
         this.time = time;
         this.caller = caller;
         this.message = message;
+        this.tags = tags;
+    }
+
+    /**
+     * Constructs a LogEntry without tags.
+     * 
+     * @param level   The log level for the entry.
+     * @param time    The time when the log entry was created.
+     * @param caller  The caller information for the log entry.
+     * @param message The log message.
+     */
+    public LogEntry(LogLevel level, long time, CallerInfo caller, String message) {
+        this(level, time, caller, message, new ArrayList<>());
     }
 
     /**
      * Constructs a LogEntry with the specified level, time, and message.
-     * The caller information is set to null.
+     * The caller information is set to null, and no tags are assigned.
      * 
      * @param level   The log level for the entry.
      * @param time    The time when the log entry was created.
@@ -102,6 +119,24 @@ public class LogEntry implements Serializable {
     }
 
     /**
+     * Retrieves the list of tags associated with the log entry.
+     * 
+     * @return A list of tags.
+     */
+    public List<String> getTags() {
+        return tags;
+    }
+
+    /**
+     * Retrieves the tags as an array.
+     * 
+     * @return An array of tags.
+     */
+    public String[] getTagsArray() {
+        return tags.toArray(new String[0]);
+    }
+
+    /**
      * Converts the log entry to a JSON object representation.
      * 
      * @return A JSONObject containing the log entry details.
@@ -139,6 +174,12 @@ public class LogEntry implements Serializable {
             // Add caller info as a nested object in the main JSON object
             json.put("caller", callerJson);
         }
+        
+        // Add tags if they exist
+        if (!tags.isEmpty()) {
+            json.put("tags", tags);
+        }
+        
         return json;
     }
 
