@@ -1,0 +1,60 @@
+{
+    "logger": {
+        "async": false,
+        "maxLogs": 100
+    },
+    "outputs": [
+        {
+            "name": "terminal_out",
+            "target": "terminal",
+            "level": "INFO",
+            "patterns": {
+                "default": "{colored} [{level}] [{message}]",
+                "WARN": "{colored} [{level}] [{class}] - [{message}]",
+                "ERROR": "{colored} [{level}] [{fullClass}.{method}] - [{message}]"
+            }
+        },
+        {
+            "name": "file_out",
+            "target": "file",
+            "filePath": "$desktop/logs/",
+            "fileName": "log{time yyyy-MM-dd_HH.mm.ss}.log",
+            "level": "DEBUG",
+            "patterns": {
+                "default": "[{time yyyy:MM:dd HH:mm:ss:SSS}] [{level}] | [{thread}] | [{fullClass}.{method}] | ({file}:{lineNumber}) -> {message}"
+            },
+
+            "rotation": {
+                "types": ["date", "size"],
+                "expireDate": "+7d",
+                "maxSizeMB": 10.0,
+                "maxFiles": 10,
+                "archiveExpired": false,
+                "removeExpired": true
+            }
+        }
+    ],
+    "specific": [
+        {
+            "class": "test.theko.logger.SpecificConfigTest$Detailed",
+            "level": "DEBUG",
+            "outputs": ["terminal_out", "file_out"]
+        },
+        {
+            "method": "test.theko.logger.SpecificConfigTest.detailMethod",
+            "level": "INFO",
+            "patterns": {
+                "default": "[{level}] - DETAIL METHOD! - {message}",
+                "INFO": "{message}"
+            },
+            "outputs": ["terminal_out"]
+        },
+        {
+            "tag": "DETAIL_TAG",
+            "patterns": {
+                "default": "[{level}] - DETAIL TAG! - {message}"
+            },
+            "outputs": ["terminal_out"]
+        }
+    ]
+}
