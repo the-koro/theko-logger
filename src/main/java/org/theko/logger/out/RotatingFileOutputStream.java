@@ -18,7 +18,7 @@ public class RotatingFileOutputStream extends OutputStream {
     private long lastRotationTime;
     private String logDirectory;
     private String logFilePrefix;
-    private int maxFiles; // Максимальное количество файлов
+    private int maxFiles; // Max files count
     private File logDirFile;
 
     public RotatingFileOutputStream(String logDirectory, long maxSize, String expireOffset, int maxFiles) {
