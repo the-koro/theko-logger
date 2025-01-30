@@ -9,13 +9,16 @@ import java.util.function.Consumer;
  * Logs can also be processed by a consumer function once created.
  */
 public class DefaultLogger extends ExtendedLogger {
-    protected LoggerOutput loggerOutput;  // Logger output handler to display logs
-    protected Consumer<LogEntry> onLogCreated;  // A consumer that can handle the log entry after it's created
+    // Logger output handler to display logs
+    protected LoggerOutput loggerOutput;
+    
+    // A consumer that can handle the log entry after it's created
+    protected Consumer<LogEntry> onLogCreated;
 
     /**
      * Constructs a DefaultLogger with specified LoggerOutput.
-     * 
-     * @param loggerOutput  The LoggerOutput to handle log display/output.
+     *
+     * @param loggerOutput The LoggerOutput to handle log display/output.
      */
     public DefaultLogger(LoggerOutput loggerOutput) {
         this.loggerOutput = loggerOutput;
@@ -31,26 +34,52 @@ public class DefaultLogger extends ExtendedLogger {
 
     /**
      * Logs a message with the specified log level. The log entry will include the caller's information.
-     * 
-     * @param level   The log level (e.g., DEBUG, ERROR, etc.).
+     *
+     * @param level The log level (e.g., DEBUG, ERROR, etc.).
      * @param message The message to log.
+     * @param tags The tags associated with the log.
      * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The created LogEntry.
      */
     @Override
-    public LogEntry log(LogLevel level, String message, int stackTraceOffset) {
-        LogEntry log = super.log(level, message, stackTraceOffset+2);
+    public LogEntry log(LogLevel level, String message, String[] tags, int stackTraceOffset) {
+        LogEntry log = super.log(level, message, tags, stackTraceOffset + 2);
+        
+        // If loggerOutput is set, process the log entry to output
         if (loggerOutput != null) {
             loggerOutput.processToOut(log);
         }
 
+        // If a consumer is set, apply it to the log entry
         if (onLogCreated != null) {
             onLogCreated.accept(log);
         }
         return log;
     }
 
+    /**
+     * Creates a log entry with the specified log level and message.
+     * 
+     * @param level The log level (e.g., DEBUG, ERROR, etc.).
+     * @param message The message to log.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The created LogEntry.
+     */
     protected LogEntry createLogEntry(LogLevel level, String message, int stackTraceOffset) {
-        return super.log(level, message, stackTraceOffset+2);
+        return super.log(level, message, stackTraceOffset + 2);
+    }
+
+    /**
+     * Creates a log entry with the specified log level, message, and tags.
+     * 
+     * @param level The log level (e.g., DEBUG, ERROR, etc.).
+     * @param message The message to log.
+     * @param tags The tags associated with the log.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     * @return The created LogEntry.
+     */
+    protected LogEntry createLogEntry(LogLevel level, String message, String[] tags, int stackTraceOffset) {
+        return super.log(level, message, tags, stackTraceOffset + 2);
     }
 
     /**
@@ -66,15 +95,61 @@ public class DefaultLogger extends ExtendedLogger {
      * Logs an informational message.
      * 
      * @param message The message to log.
+     * @param tags The tags associated with the log.
+     * @return The created LogEntry.
      */
-    public LogEntry info(String message) {
-        return log(LogLevel.INFO, message, 3);
+    public LogEntry info(String message, String... tags) {
+        return super.log(LogLevel.INFO, message, tags, 2);
     }
 
     /**
      * Logs a warning message.
      * 
      * @param message The message to log.
+     * @param tags The tags associated with the log.
+     * @return The created LogEntry.
+     */
+    public LogEntry warn(String message, String... tags) {
+        return super.log(LogLevel.WARN, message, tags, 2);
+    }
+
+    /**
+     * Logs an error message.
+     * 
+     * @param message The message to log.
+     * @param tags The tags associated with the log.
+     * @return The created LogEntry.
+     */
+    public LogEntry error(String message, String... tags) {
+        return super.log(LogLevel.ERROR, message, tags, 2);
+    }
+
+    /**
+     * Logs a debug message.
+     * 
+     * @param message The message to log.
+     * @param tags The tags associated with the log.
+     * @return The created LogEntry.
+     */
+    public LogEntry debug(String message, String... tags) {
+        return super.log(LogLevel.DEBUG, message, tags, 2);
+    }
+
+    /**
+     * Logs an informational message.
+     * 
+     * @param message The message to log.
+     * @return The created LogEntry.
+     */
+    public LogEntry info(String message) {
+        return super.log(LogLevel.INFO, message, 2);
+    }
+
+    /**
+     * Logs a warning message.
+     * 
+     * @param message The message to log.
+     * @return The created LogEntry.
      */
     public LogEntry warn(String message) {
         return super.log(LogLevel.WARN, message, 2);
@@ -84,6 +159,7 @@ public class DefaultLogger extends ExtendedLogger {
      * Logs an error message.
      * 
      * @param message The message to log.
+     * @return The created LogEntry.
      */
     public LogEntry error(String message) {
         return super.log(LogLevel.ERROR, message, 2);
@@ -93,6 +169,7 @@ public class DefaultLogger extends ExtendedLogger {
      * Logs a debug message.
      * 
      * @param message The message to log.
+     * @return The created LogEntry.
      */
     public LogEntry debug(String message) {
         return super.log(LogLevel.DEBUG, message, 2);
