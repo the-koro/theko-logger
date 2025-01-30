@@ -35,32 +35,53 @@ public class GlobalLogger {
 
     /**
      * Logs a message at a specified log level.
-     *
+     * 
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      */
-    public static void log(LogLevel level, String message) {
-        logger.log(level, message);
+    public static void log(LogLevel level, String message, String... tags) {
+        log(level, message, tags, 1);
     }
 
     /**
      * Logs a message at a specified log level.
-     *
+     * 
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     */
+    public static void log(LogLevel level, String message) {
+        log(level, message, new String[0], 1);
+    }
+
+    /**
+     * Logs a message at a specified log level.
+     * 
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     */
+    protected static LogEntry log(LogLevel level, String message, String tags[], int stackTraceOffset) {
+        if (logger instanceof ExtendedLogger) {
+            return ((ExtendedLogger) logger).log(level, message, tags, stackTraceOffset + 1);
+        } else {
+            return logger.log(level, message, tags);
+        }
+    }
+
+    /**
+     * Logs a message at a specified log level.
+     * 
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      * @param stackTraceOffset The stack trace offset to identify the caller info.
      */
     protected static LogEntry log(LogLevel level, String message, int stackTraceOffset) {
-        if (logger instanceof ExtendedLogger) {
-            return ((ExtendedLogger) logger).log(level, message, stackTraceOffset + 1);
-        } else {
-            return logger.log(level, message);
-        }
+        return log(level, message, new String[0], stackTraceOffset+1);
     }
 
     /**
      * Logs a message at a specified log level, including the details of an exception.
-     *
+     * 
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      * @param e The exception whose stack trace will be logged.
@@ -71,21 +92,21 @@ public class GlobalLogger {
 
     /**
      * Logs a message at a specified log level, including the details of an exception.
-     *
+     * 
      * @param level The log level at which the message should be logged.
      * @param message The message to be logged.
      * @param e The exception whose stack trace will be logged.
      * @param stackTraceOffset The stack trace offset to identify the caller info.
      */
-    protected static LogEntry log(LogLevel level, String message, Throwable e, int stackTraceOffset) {
+    protected static LogEntry log(LogLevel level, String message, Throwable e, String[] tags, int stackTraceOffset) {
         if (logger instanceof ExtendedLogger) {
-            return ((ExtendedLogger) logger).log(level, message, e, stackTraceOffset+1);
+            return ((ExtendedLogger) logger).log(level, message, e, tags, stackTraceOffset+1);
         } else {
-            LogEntry log = logger.log(level, message);
+            LogEntry log = logger.log(level, message, tags);
             if (e != null) {
-                logger.log(level, "Exception: " + e.toString());
+                logger.log(level, "Exception: " + e.toString(), tags);
                 for (StackTraceElement element : e.getStackTrace()) {
-                    logger.log(level, "\tat " + element.toString());
+                    logger.log(level, "\tat " + element.toString(), tags);
                 }
             }
             return log;
@@ -93,8 +114,56 @@ public class GlobalLogger {
     }
 
     /**
+     * Logs a message at a specified log level, including the details of an exception.
+     * 
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param e The exception whose stack trace will be logged.
+     * @param stackTraceOffset The stack trace offset to identify the caller info.
+     */
+    protected static LogEntry log(LogLevel level, String message, Throwable e, int stackTraceOffset) {
+        return log(level, message, e, new String[0], stackTraceOffset+1);
+    }
+
+    /**
+     * Logs an informational message.
+     * 
+     * @param message The message to log.
+     */
+    public static LogEntry info(String message, String... tags) {
+        return log(LogLevel.INFO, message, tags, 1);
+    }
+
+    /**
+     * Logs a warning message.
+     * 
+     * @param message The message to log.
+     */
+    public static LogEntry warn(String message, String... tags) {
+        return log(LogLevel.WARN, message, tags, 1);
+    }
+
+    /**
+     * Logs an error message.
+     * 
+     * @param message The message to log.
+     */
+    public static LogEntry error(String message, String... tags) {
+        return log(LogLevel.ERROR, message, tags, 1);
+    }
+
+    /**
+     * Logs a debug message.
+     * 
+     * @param message The message to log.
+     */
+    public static LogEntry debug(String message, String... tags) {
+        return log(LogLevel.DEBUG, message, tags, 1);
+    }
+
+    /**
      * Logs a message at the DEBUG log level.
-     *
+     * 
      * @param message The message to be logged.
      */
     public static LogEntry debug(String message) {
@@ -103,7 +172,7 @@ public class GlobalLogger {
 
     /**
      * Logs a message at the INFO log level.
-     *
+     * 
      * @param message The message to be logged.
      */
     public static LogEntry info(String message) {
@@ -112,7 +181,7 @@ public class GlobalLogger {
 
     /**
      * Logs a message at the WARN log level.
-     *
+     * 
      * @param message The message to be logged.
      */
     public static LogEntry warn(String message) {
@@ -121,7 +190,7 @@ public class GlobalLogger {
 
     /**
      * Logs a message at the ERROR log level.
-     *
+     * 
      * @param message The message to be logged.
      */
     public static LogEntry error(String message) {
@@ -146,6 +215,12 @@ public class GlobalLogger {
         return loggerOutput;
     }
 
+    /**
+     * Sets the logger instance globally and optionally attaches the output to it.
+     * 
+     * @param logger The logger instance to set.
+     * @param addOutputToLogger A flag indicating whether to add the output to the logger.
+     */
     public static void setLogger(Logger logger, boolean addOutputToLogger) {
         GlobalLogger.logger = logger;
         if (addOutputToLogger && logger instanceof DefaultLogger) {
@@ -153,6 +228,20 @@ public class GlobalLogger {
         }
     }
 
+    /**
+     * Sets the logger instance globally without attaching the output to it.
+     * 
+     * @param logger The logger instance to set.
+     */
+    public static void setLogger(Logger logger) {
+        setLogger(logger, false);
+    }
+
+    /**
+     * Sets the output configuration for the logger globally.
+     * 
+     * @param loggerOutput The {@link LoggerOutput} instance to set.
+     */
     public static void setLoggerOutput(LoggerOutput loggerOutput) {
         GlobalLogger.loggerOutput = loggerOutput;
         if (logger instanceof DefaultLogger) {
@@ -163,7 +252,7 @@ public class GlobalLogger {
     /**
      * Retrieves a list of all current output settings.
      * 
-     * @return A list of LogOutputSettings.
+     * @return A list of {@link LogOutputSettings}.
      */
     public static List<LogOutputSettings> getOutputs() {
         return loggerOutput.getOutputs();
@@ -186,12 +275,9 @@ public class GlobalLogger {
     public static void addOutput(LogOutputSettings output) {
         loggerOutput.addOutput(output);
     }
+
     /**
      * Retrieves a list of {@link LogOutputSettings} that have a matching {@link OutputStream}.
-     * 
-     * This method filters the existing outputs to find those whose {@link OutputStream} is equal to
-     * the one provided as an argument. If no matching {@link LogOutputSettings} are found, an empty
-     * list will be returned.
      * 
      * @param os The {@link OutputStream} to match against the {@link LogOutputSettings}.
      * @return A list of {@link LogOutputSettings} with a matching {@link OutputStream}.
