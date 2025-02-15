@@ -1,0 +1,3 @@
+target/site/*
+target/reports/*
+*.jar
