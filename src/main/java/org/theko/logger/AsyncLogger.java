@@ -89,7 +89,7 @@ public class AsyncLogger extends DefaultLogger {
      */
     @Override
     public LogEntry log(LogLevel level, String message, String[] tags, int stackTraceOffset) {
-        LogEntry log = createLogEntry(level, message, tags, stackTraceOffset);
+        LogEntry log = createLogEntry(level, message, tags, stackTraceOffset+1);
         logQueue.offer(log); // Add log to the processing queue
         return log;
     }
