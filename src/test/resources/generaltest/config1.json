@@ -1,0 +1,21 @@
+{
+    "outputs": [
+        {
+            "name": "terminal_out",
+            "target": "terminal",
+            "level": "ALL",
+            "patterns": {
+                "default": "[{level}] ({tags}) {message}\n",
+                "ERROR": "[{level}] ({tags}) [{thread}: {fullClass}] - {message}\n"
+            }
+        },
+        {
+            "name": "log_file",
+            "target": "file",
+            "level": "ALL",
+            "patterns": {
+                "default": "[{time yyyy:MM:dd HH:mm:ss:SSS}] | [{level}] [{tags}] | [{thread}: {fullClass}.{method}] ({file}:{lineNumber}) - {message}\n"
+            }
+        }
+    ]
+}
