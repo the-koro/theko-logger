@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -148,6 +149,15 @@ public class LogEntry implements Serializable {
         json.put("level", level.toString());
         json.put("time", time);
         json.put("message", message);
+
+        JSONArray tagsArray = new JSONArray();
+        if (tags == null || tags.size() == 0) {
+            for (int i = 0; i < tags.size(); i++) {
+                tagsArray.put(tags.get(i));
+            }
+        }
+
+        json.put("tags", tagsArray);
         
         // If caller information is available, add those details as well
         if (caller != null) {
