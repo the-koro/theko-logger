@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 public class DefaultLogger extends ExtendedLogger {
     // Logger output handler to display logs
     protected LoggerOutput loggerOutput;
+
+    private static final String[] EMPTY_TAGS = new String[]{""};
     
     // A consumer that can handle the log entry after it's created
     protected Consumer<LogEntry> onLogCreated;
@@ -43,7 +45,7 @@ public class DefaultLogger extends ExtendedLogger {
      */
     @Override
     public LogEntry log(LogLevel level, String message, String[] tags, int stackTraceOffset) {
-        LogEntry log = super.log(level, message, tags, stackTraceOffset + 2);
+        LogEntry log = super.log(level, message, tags, stackTraceOffset + 1);
         
         // If loggerOutput is set, process the log entry to output
         if (loggerOutput != null) {
@@ -99,7 +101,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry info(String message, String... tags) {
-        return super.log(LogLevel.INFO, message, tags, 2);
+        return log(LogLevel.INFO, message, tags, 2);
     }
 
     /**
@@ -110,7 +112,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry warn(String message, String... tags) {
-        return super.log(LogLevel.WARN, message, tags, 2);
+        return log(LogLevel.WARN, message, tags, 2);
     }
 
     /**
@@ -121,7 +123,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry error(String message, String... tags) {
-        return super.log(LogLevel.ERROR, message, tags, 2);
+        return log(LogLevel.ERROR, message, tags, 2);
     }
 
     /**
@@ -132,7 +134,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry debug(String message, String... tags) {
-        return super.log(LogLevel.DEBUG, message, tags, 2);
+        return log(LogLevel.DEBUG, message, tags, 2);
     }
 
     /**
@@ -142,7 +144,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry info(String message) {
-        return super.log(LogLevel.INFO, message, 2);
+        return log(LogLevel.INFO, message, EMPTY_TAGS, 2);
     }
 
     /**
@@ -152,7 +154,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry warn(String message) {
-        return super.log(LogLevel.WARN, message, 2);
+        return log(LogLevel.WARN, message, EMPTY_TAGS, 2);
     }
 
     /**
@@ -162,7 +164,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry error(String message) {
-        return super.log(LogLevel.ERROR, message, 2);
+        return log(LogLevel.ERROR, message, EMPTY_TAGS, 2);
     }
 
     /**
@@ -172,7 +174,7 @@ public class DefaultLogger extends ExtendedLogger {
      * @return The created LogEntry.
      */
     public LogEntry debug(String message) {
-        return super.log(LogLevel.DEBUG, message, 2);
+        return log(LogLevel.DEBUG, message, EMPTY_TAGS, 2);
     }
 
     /**
