@@ -33,6 +33,18 @@ public class ExtendedLogger implements Logger {
     }
 
     /**
+     * Logs a message at the specified log level, and tags, including details of an exception if provided.
+     * 
+     * @param level The log level at which the message should be logged.
+     * @param message The message to be logged.
+     * @param e The exception whose stack trace will be logged, if applicable.
+     * @param tags Additional tags associated with the log entry.
+     */
+    public void log(LogLevel level, String message, Throwable e, String... tags) {
+        this.log(level, message, e, tags, 2);
+    }
+
+    /**
      * Logs a message at the specified log level, including details of an exception if provided.
      * 
      * @param level The log level at which the message should be logged.
@@ -57,12 +69,14 @@ public class ExtendedLogger implements Logger {
      * @return The log entry created.
      */
     public LogEntry log(LogLevel level, String message, Throwable e, String[] tags, int stackTraceOffset) {
-        LogEntry log = this.log(level, message, tags, stackTraceOffset + 2);
+        LogEntry log = this.log(level, message, tags, stackTraceOffset + 1);
         if (e != null) {
-            this.log(level, "Exception: " + e.toString(), tags, stackTraceOffset + 2);
+            StringBuilder exception = new StringBuilder();
+            exception.append("Exception: " + e.toString() + "\n");
             for (StackTraceElement element : e.getStackTrace()) {
-                this.log(level, "\tat " + element.toString(), tags, stackTraceOffset + 2);
+                exception.append("\tat " + element.toString() + "\n");
             }
+            this.log(level, exception.toString(), tags, stackTraceOffset + 1);
         }
         return log;
     }
@@ -95,7 +109,7 @@ public class ExtendedLogger implements Logger {
         for (int i = 0; i < stackTrace.length; i++) {
             StackTraceElement element = stackTrace[i];
             if (element.getMethodName().equals("log") && element.getClassName().equals(className)) {
-                if (i + stackTraceOffset < stackTrace.length) {
+                if (i + stackTraceOffset < stackTrace.length && i + stackTraceOffset >= 0) {
                     callerElement = stackTrace[i + stackTraceOffset];
                 }
                 break;
