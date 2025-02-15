@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,7 +75,7 @@ public class LoggerConfig {
         JSONObject loggerJson = config.optJSONObject("logger");
         JSONArray outputsJsonArray = config.optJSONArray("outputs");
 
-        if (loggerJson == null || outputsJsonArray == null) {
+        if (loggerJson == null && outputsJsonArray == null) {
             throw new IllegalArgumentException("Missing 'logger' or 'outputs' configuration.");
         }
 
@@ -128,12 +129,21 @@ public class LoggerConfig {
      */
     private LogOutputSettings loadLogOutputSettings(JSONObject output) {
         String outputName = output.optString("name", String.valueOf(output.hashCode()));
-        OutputStream os = createOutputStream(output, outputName);
+        AtomicBoolean isJsonOutput = new AtomicBoolean();
+        OutputStream os = createOutputStream(output, outputName, isJsonOutput);
 
-        LogLevel preferredLevel = LogLevel.fromString(output.optString("level", "INFO"));
+        String levelStr = output.optString("level", "INFO");
+        if (levelStr.equalsIgnoreCase("ALL")) {
+            levelStr = "DEBUG";
+        }
+        LogLevel preferredLevel = LogLevel.fromString(levelStr);
         Map<LogLevel, String> patternsMap = loadPatternsMap(output.optJSONObject("patterns"));
 
-        return new LogOutputSettings(outputName, os, patternsMap, preferredLevel);
+        LogOutputSettings los = new LogOutputSettings(outputName, os, patternsMap, preferredLevel);
+        los.setAsJsonOutput(isJsonOutput.get());
+        System.out.println(isJsonOutput.get());
+
+        return los;
     }
 
     /**
@@ -143,12 +153,15 @@ public class LoggerConfig {
      * @param outputName The name of the output.
      * @return The created OutputStream.
      */
-    private OutputStream createOutputStream(JSONObject output, String outputName) {
+    private OutputStream createOutputStream(JSONObject output, String outputName, AtomicBoolean isJsonOutput) {
         String targetOutput = output.optString("target", "file").toLowerCase();
         switch (targetOutput) {
             case "terminal":
                 return System.out;
             case "file":
+                return createFileOutputStream(output, outputName);
+            case "json":
+                isJsonOutput.set(true);
                 return createFileOutputStream(output, outputName);
             default:
                 throw new IllegalArgumentException("Invalid output target: " + targetOutput);
@@ -284,6 +297,9 @@ public class LoggerConfig {
      * @return The initialized ExtendedLogger.
      */
     private ExtendedLogger loadLogger(JSONObject loggerJson) {
+        if (loggerJson == null) {
+            return new DefaultLogger();
+        }
         ExtendedLogger logger = loggerJson.optBoolean("async", false) ? new AsyncLogger() : new DefaultLogger();
         logger.setMaxLogsCount(loggerJson.optInt("maxLogs", -1));
         return logger;
