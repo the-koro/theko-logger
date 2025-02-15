@@ -183,8 +183,12 @@ public class LoggerOutput {
                             System.err.println("The output stream is null.");
                             continue;
                         }
-                        // Write the formatted message to the output stream
-                        os.write(formattedMessage.getBytes(StandardCharsets.UTF_8));
+                        if (output.isJsonOutput()) {
+                            os.write(entry.getJSONObject().toString().getBytes(StandardCharsets.UTF_8));
+                        } else {
+                            // Write the formatted message to the output stream
+                            os.write(formattedMessage.getBytes(StandardCharsets.UTF_8));
+                        }
                     } catch (IOException e) {
                         e.printStackTrace(); // Log the error to standard output
                     }
@@ -299,6 +303,9 @@ public class LoggerOutput {
                         case "tags":
                             StringBuilder tagsStringBuilder = new StringBuilder();
                             List<String> tags = entry.getTags();
+                            if (tags == null || tags.size() == 0) {
+                                break;
+                            }
                             for (int i = 0; i < tags.size()-1; i++) {
                                 tagsStringBuilder.append(tags.get(i)).append(", ");
                             }
