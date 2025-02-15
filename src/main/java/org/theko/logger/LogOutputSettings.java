@@ -13,6 +13,7 @@ public class LogOutputSettings {
     protected OutputStream os;
     protected Map<LogLevel, String> patternsMap;
     protected LogLevel preferredLevel;
+    protected boolean isJsonOutput = false;
     //protected Rotation rotationSettings;
 
     /**
@@ -135,6 +136,14 @@ public class LogOutputSettings {
 
     public String getPattern(LogLevel level) {
         return patternsMap.get(level);
+    }
+
+    public void setAsJsonOutput(boolean b) {
+        this.isJsonOutput = b;
+    }
+
+    public boolean isJsonOutput() {
+        return isJsonOutput;
     }
 
     /**
