@@ -24,9 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,7 +52,8 @@ import javax.swing.undo.UndoManager;
 
 import org.theko.logger.DefaultLogger;
 import org.theko.logger.LogLevel;
-import org.theko.logger.LoggerConfig;
+
+import shared.SharedFunctions;
 
 /**
  * The main class of the application, representing a simple text editor.
@@ -78,7 +77,7 @@ public class ApplicationTest1 extends JFrame {
         loadLogger();
         logger.debug("Initializing application...", "APP", "INIT");
 
-        setTitle("Simple Notepad - Untitled");
+        setTitle("Notepad - Untitled");
         setSize(800, 600);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         logger.debug("Frame launched with default size 800x600.", "FRAME", "INIT");
@@ -140,30 +139,7 @@ public class ApplicationTest1 extends JFrame {
      * Loads the logger configuration from a file.
      */
     private void loadLogger() {
-        try {
-            URL resourceUrl = this.getClass().getResource("config1.json");
-            if (resourceUrl == null) {
-                throw new IllegalStateException("Config file not found: config1.json");
-            }
-
-            String configPath = resourceUrl.toExternalForm().substring(6);
-            System.out.println("Loading logger configuration from: " + configPath);
-
-            LoggerConfig config = new LoggerConfig(configPath);
-            config.load();
-            System.out.println("Logger configuration loaded successfully.");
-
-            logger = (DefaultLogger) config.getLogger();
-            if (logger == null) {
-                throw new IllegalStateException("Logger instance is null.");
-            }
-
-            logger.setLoggerOutput(Objects.requireNonNull(config.getLoggerOutput(), "Logger output is null."));
-            logger.debug("Logger initialized and ready to use.", "LOGGER", "INIT");
-        } catch (Exception e) {
-            System.err.println("Error initializing logger: " + e.getMessage());
-            e.printStackTrace();
-        }
+        this.logger = (DefaultLogger)SharedFunctions.loadLogger(this.getClass().getResource("config1.json"));
     }
 
     /**
@@ -200,15 +176,27 @@ public class ApplicationTest1 extends JFrame {
     private JMenu createFileMenu() {
         JMenu fileMenu = new JMenu("File");
         
+        logger.debug("Creating 'New' menu item", "FILE", "MENU");
+        JMenuItem newItem = new JMenuItem("New");
+        newItem.addActionListener(e -> newFile(e));
+        newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.CTRL_DOWN_MASK));
+        
+        logger.debug("Creating 'Open' menu item", "FILE", "MENU");
         JMenuItem openItem = new JMenuItem("Open");
         openItem.addActionListener(e -> openFile(e));
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK));
         
+        logger.debug("Creating 'Save' menu item", "FILE", "MENU");
         JMenuItem saveItem = new JMenuItem("Save");
         saveItem.addActionListener(e -> saveFile(false));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
         
+        logger.debug("Creating 'Save As' menu item", "FILE", "MENU");
         JMenuItem saveAsItem = new JMenuItem("Save As");
         saveAsItem.addActionListener(e -> saveFile(true));
+        saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.SHIFT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK));
         
+        logger.debug("Creating 'Exit' menu item", "FILE", "MENU");
         JMenuItem exitItem = new JMenuItem("Exit");
             exitItem.addActionListener(e -> {
                 if (confirmSave()) {
@@ -221,6 +209,8 @@ public class ApplicationTest1 extends JFrame {
             }
         });
         
+        logger.debug("Creating 'File' menu.", "FILE", "MENU");
+        fileMenu.add(newItem);
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
         fileMenu.add(saveAsItem);
@@ -237,11 +227,20 @@ public class ApplicationTest1 extends JFrame {
     private JMenu createEditMenu() {
         JMenu editMenu = new JMenu("Edit");
         
+        logger.debug("Creating 'Cut' menu item", "EDIT", "MENU");
         JMenuItem cutItem = new JMenuItem("Cut");
         cutItem.addActionListener(e -> textArea.cut());
         
+        logger.debug("Creating 'Copy' menu item", "EDIT", "MENU");
         JMenuItem copyItem = new JMenuItem("Copy");
-        copyItem.addActionListener(e -> textArea.copy());JMenuItem undoItem = new JMenuItem("Undo");
+        copyItem.addActionListener(e -> textArea.copy());
+        
+        logger.debug("Creating 'Paste' menu item", "EDIT", "MENU");
+        JMenuItem pasteItem = new JMenuItem("Paste");
+        pasteItem.addActionListener(e -> textArea.paste());
+        
+        logger.debug("Creating 'Undo' menu item", "EDIT", "MENU");
+        JMenuItem undoItem = new JMenuItem("Undo");
         undoItem.addActionListener(e -> {
             if (undoManager.canUndo()) {
                 undoManager.undo();
@@ -249,6 +248,7 @@ public class ApplicationTest1 extends JFrame {
         });
         undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK));
         
+        logger.debug("Creating 'Redo' menu item", "EDIT", "MENU");
         JMenuItem redoItem = new JMenuItem("Redo");
         redoItem.addActionListener(e -> {
             if (undoManager.canRedo()) {
@@ -257,15 +257,15 @@ public class ApplicationTest1 extends JFrame {
         });
         redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK));
         
-        JMenuItem pasteItem = new JMenuItem("Paste");
-        pasteItem.addActionListener(e -> textArea.paste());
-        
+        logger.debug("Creating 'Find' menu item", "EDIT", "MENU");
         JMenuItem findItem = new JMenuItem("Find");
         findItem.addActionListener(e -> showSearchDialog(false));
         
+        logger.debug("Creating 'Replace' menu item", "EDIT", "MENU");
         JMenuItem replaceItem = new JMenuItem("Replace");
         replaceItem.addActionListener(e -> showSearchDialog(true));
         
+        logger.debug("Creating 'Edit' menu.", "EDIT", "MENU");
         editMenu.add(cutItem);
         editMenu.add(copyItem);
         editMenu.add(pasteItem);
@@ -286,21 +286,26 @@ public class ApplicationTest1 extends JFrame {
     private JMenu createViewMenu() {
         JMenu viewMenu = new JMenu("View");
         
+        logger.debug("Creating 'Zoom In' menu item", "VIEW", "MENU");
         JMenuItem zoomIn = new JMenuItem("Zoom In (+)");
         zoomIn.addActionListener(e -> changeFontSize(2));
         
+        logger.debug("Creating 'Zoom Out' menu item", "VIEW", "MENU");
         JMenuItem zoomOut = new JMenuItem("Zoom Out (-)");
         zoomOut.addActionListener(e -> changeFontSize(-2));
         
+        logger.debug("Creating 'Set Font Size' menu item", "VIEW", "MENU");
         JMenuItem setSize = new JMenuItem("Set Font Size...");
         setSize.addActionListener(e -> setCustomFontSize());
         
+        logger.debug("Creating 'View' menu.", "VIEW", "MENU");
         viewMenu.add(zoomIn);
         viewMenu.add(zoomOut);
         viewMenu.addSeparator();
         viewMenu.add(setSize);
         
         // Mouse wheel listener for Ctrl+Scroll
+        logger.debug("Creating mouse wheel listener for Ctrl+Scroll (Zoom)", "VIEW", "MENU");
         textArea.addMouseWheelListener(e -> {
             if (e.isControlDown()) {
                 int rotation = e.getWheelRotation();
@@ -320,9 +325,11 @@ public class ApplicationTest1 extends JFrame {
     private JMenu createHelpMenu() {
         JMenu helpMenu = new JMenu("Help");
         
+        logger.debug("Creating 'About' menu item", "HELP", "MENU");
         JMenuItem aboutItem = new JMenuItem("About");
         aboutItem.addActionListener(e -> showAboutDialog());
         
+        logger.debug("Creating 'Help' menu.", "HELP", "MENU");
         helpMenu.add(aboutItem);
         return helpMenu;
     }
@@ -331,7 +338,7 @@ public class ApplicationTest1 extends JFrame {
      * Displays the "About" dialog.
      */
     private void showAboutDialog() {
-        JOptionPane.showMessageDialog(this, "Simple Notepad\nusing theko-logger", "About Simple Notepad", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Notepad\nusing theko-logger", "About Notepad", JOptionPane.INFORMATION_MESSAGE);
         logger.debug("About dialog shown.", "HELP", "ABOUT");
     }
 
@@ -473,7 +480,7 @@ public class ApplicationTest1 extends JFrame {
      * Updates the title of the window to reflect the current file and modification status.
      */
     private void updateTitle() {
-        setTitle("Simple Notepad - " + (currentFile != null ? currentFile.getName() : "Untitled") + (isModified ? " *" : ""));
+        setTitle("Notepad - " + (currentFile != null ? currentFile.getName() : "Untitled") + (isModified ? " *" : ""));
         logger.debug("Title updated.", "FRAME");
     }
 
@@ -488,6 +495,18 @@ public class ApplicationTest1 extends JFrame {
         if (option == JOptionPane.CANCEL_OPTION) return false;
         if (option == JOptionPane.YES_OPTION) saveFile(false);
         return true;
+    }
+
+    /**
+     * Creates new document
+     * @param e The action event.
+     */
+    private void newFile(ActionEvent e) {
+        if (!confirmSave()) return;
+
+        logger.debug("New file.");
+        textArea.setText("");
+        undoManager.discardAllEdits();
     }
 
     /**
@@ -601,6 +620,7 @@ public class ApplicationTest1 extends JFrame {
                     effectWindow.dispose();
                     frame.dispose();
                     logger.debug("Animation completed.", "ANIM", "EXIT");
+                    System.exit(0);
                 } else {
                     effectWindow.repaint();
                 }
