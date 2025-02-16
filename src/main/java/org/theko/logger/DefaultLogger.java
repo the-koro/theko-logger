@@ -127,6 +127,17 @@ public class DefaultLogger extends ExtendedLogger {
     }
 
     /**
+     * Logs an fatal message.
+     * 
+     * @param message The message to log.
+     * @param tags The tags associated with the log.
+     * @return The created LogEntry.
+     */
+    public LogEntry fatal(String message, String... tags) {
+        return log(LogLevel.FATAL, message, tags, 2);
+    }
+
+    /**
      * Logs a debug message.
      * 
      * @param message The message to log.
@@ -165,6 +176,16 @@ public class DefaultLogger extends ExtendedLogger {
      */
     public LogEntry error(String message) {
         return log(LogLevel.ERROR, message, EMPTY_TAGS, 2);
+    }
+
+    /**
+     * Logs an fatal message.
+     * 
+     * @param message The message to log.
+     * @return The created LogEntry.
+     */
+    public LogEntry fatal(String message) {
+        return log(LogLevel.FATAL, message, EMPTY_TAGS, 2);
     }
 
     /**
